@@ -8,9 +8,20 @@
 #define MAX_N 2000
 #define MAX_T 300
 
-/*NOTE: NTL allows to access matrices as 1- based with Matlab notation */
-NTL::Mat<NTL::ZZ> binomial_table;
+#define LOW_K_MAX_N 10000
+#define LOW_K_MAX_T 10
 
+const NTL::RR nat_log_2 = NTL::log(NTL::RR(2));
+
+static inline NTL::RR log2_RR(NTL::RR v){
+    return NTL::log(v)/nat_log_2;
+}
+
+NTL::Mat<NTL::ZZ> binomial_table; /*contains all binomials up to MAX_N-choose-MAX_T */
+NTL::Mat<NTL::ZZ> low_k_binomial_table; /*contains all binomials up to LOW_K_MAX_N-choose-LOW_K_MAX_T */
+
+NTL::RR pi;
+/*NOTE: NTL allows to access matrices as 1- based with Matlab notation */
 void InitBinomials(){
     std::cerr << "Precomputing n-choose-t up to n: " << MAX_N << 
                                               " t: " << MAX_T << std::endl;
@@ -23,9 +34,22 @@ void InitBinomials(){
             binomial_table[i][j] = binomial_table[i][j-1] * NTL::ZZ(i-j+1) / NTL::ZZ(j);
         }
     }
+    std::cerr << "Precomputing low n-choose-t up to n: " << LOW_K_MAX_N << 
+                                                       " t: " << LOW_K_MAX_T << std::endl;
+    low_k_binomial_table.SetDims(LOW_K_MAX_N+1,LOW_K_MAX_T+1);
+    low_k_binomial_table[0][0] = NTL::ZZ(1);
+    for (unsigned i = 0 ; i <= LOW_K_MAX_N; i++){
+        low_k_binomial_table[i][0] = NTL::ZZ(1);
+        low_k_binomial_table[i][1] = NTL::ZZ(i);
+        for(unsigned j=2 ; (j <= i) && (j <= LOW_K_MAX_T) ; j++){
+            low_k_binomial_table[i][j] = low_k_binomial_table[i][j-1] * NTL::ZZ(i-j+1) / NTL::ZZ(j);
+        }
+    }
+    std::cerr << "done" << std::endl;
+    pi = NTL::ComputePi_RR();
 }
 
-NTL::RR pi;
+
 
 NTL::RR lnFactorial(NTL::RR n){
     /* log of Stirling series approximated to the fourth term 
@@ -47,10 +71,15 @@ NTL::RR lnBinom(NTL::RR n, NTL::RR k){
 
 
 NTL::ZZ binomial_wrapper(long n, long k){
+    if(k>n) return NTL::ZZ(0);
     /* employ memoized if available */
     if ((n <= MAX_N) && (k < MAX_T)){
         return binomial_table[n][k];
     }
+    if ((n <= LOW_K_MAX_N) && (k < LOW_K_MAX_T)){
+        return low_k_binomial_table[n][k];
+    }
+    
     /* shortcut computation for fast cases (k < 10) where 
      * Stirling may not provide good approximations */
     if (k < 10) {

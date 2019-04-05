@@ -19,8 +19,12 @@ int main(int argc, char* argv[]){
  uint32_t t = atoi(argv[2]);
  /* reduce by a factor matching the QC block size */
  NTL::RR encodable_length;
- encodable_length = lnBinom(NTL::to_RR(n), NTL::to_RR(t));
- std::cout << "#define MAX_ENCODABLE_BIT_SIZE_CW_ENCODING (" << NTL::conv<unsigned long int>(encodable_length/NTL::log(NTL::RR(2))) << ")" ;
+ encodable_length = lnBinom(NTL::to_RR(n), NTL::to_RR(t))/NTL::log(NTL::RR(2));
+
+ NTL::RR d = NTL::to_RR( 0.69315 * ((double)n - ( (double)t - 1.0)/2.0) /((double) t) );
+
+ std::cout << "Maximum safely encoded: " << t*NTL::conv<unsigned long int>(NTL::floor(NTL::log(d)/NTL::log(NTL::RR(2))+1)) << std::endl;
+ std::cout << "#define MAX_ENCODABLE_BIT_SIZE_CW_ENCODING (" << NTL::conv<unsigned long int>(encodable_length) << ")" ;
   std::cout << std::endl;
   return 0;
 }

@@ -3,9 +3,9 @@
 #include <cmath>
 
 #define NUM_BITS_REAL_MANTISSA  128
-#define EPSILON                 0.3
 #define IGNORE_DECODING_COST      0
 #define SKIP_BJMM 0
+#define LOG_COST_CRITERION 1
 
 #include "proper_primes.hpp"
 #include "binomials.hpp"
@@ -28,6 +28,7 @@ uint32_t estimate_t_val(const uint32_t c_sec_level,
     while (hi - lo > 1){
        t_prec = t;
        t = (lo + hi)/2;
+       std::cerr << "testing t " <<  t << std::endl;
        achieved_c_sec_level = c_isd_log_cost(n_0*p,((n_0-1)*p),t,p,0);
        achieved_q_sec_level = q_isd_log_cost(n_0*p,((n_0-1)*p),t,p,0);
        if ( (achieved_c_sec_level >= c_sec_level) && 
@@ -91,18 +92,18 @@ uint64_t estimate_dv (const uint32_t c_sec_level, // expressed as
        d_v_prime = (lo + hi)/2;
        found_dv_mpartition = ComputeDvMPartition(d_v_prime,n_0,mpartition,d_v);
        if(found_dv_mpartition) {
-          keyspace= 1;
+          keyspace = 1;
           for(int i =0; i < (int)n_0; i++){
               keyspace *= binomial_wrapper(p,mpartition[i]);
           }
           keyspace = NTL::power(keyspace,n_0);
           keyspace += NTL::power(binomial_wrapper(p,d_v),n_0);
-          achieved_c_enum_sec_level = NTL::conv<double>(NTL::log(NTL::to_RR(keyspace))/
-                                                        NTL::log(NTL::to_RR(2)));
+          achieved_c_enum_sec_level = NTL::conv<double>(log2_RR(NTL::to_RR(keyspace)));
           achieved_q_enum_sec_level = achieved_c_enum_sec_level/2;
           if ((achieved_q_enum_sec_level >= q_sec_level) && 
               (achieved_c_enum_sec_level >= c_sec_level) ){
-              // last parameter indicates a KRA, reduce margin by p
+              /* last parameter indicates a KRA, reduce margin by p due to
+              quasi cyclicity */
               achieved_c_sec_level = c_isd_log_cost(n_0*p,p,n_0*d_v_prime,p,1);
               achieved_q_sec_level = q_isd_log_cost(n_0*p,p,n_0*d_v_prime,p,1);
           }
@@ -168,8 +169,8 @@ int main(int argc, char* argv[]){
   std::cout << "finding parameters" << std::endl;
   do {
       /* estimate the current prime as the closest 
-       * to the previous p_th * (1+EPSILON) */
-      uint32_t next_prime = ceil(p_th * (1.0+EPSILON));
+       * to the previous p_th * (1+epsilon) */
+      uint32_t next_prime = ceil(p_th * (1.0+epsilon));
       current_prime_pos = 0;
       while (proper_primes[current_prime_pos] < next_prime){
           current_prime_pos++;
@@ -193,9 +194,9 @@ int main(int argc, char* argv[]){
       }
       d_v_prime = d_v * d_v_prime;
       p_th=Findpth(n_0, d_v_prime, t);
-      std::cout << " -- p should be at least " << (1.0+EPSILON)* p_th << 
+      std::cout << " -- p should be at least " << (1.0+epsilon)* p_th << 
          "to correct the errors" << std::endl;
-  }  while ((p <= (1.0+EPSILON)* p_th) &&
+  }  while ((p <= (1.0+epsilon)* p_th) &&
             (current_prime_pos < PRIMES_NO) );
 
   std::cout << "refining parameters" << std::endl;
@@ -225,8 +226,8 @@ int main(int argc, char* argv[]){
       p_th=Findpth(n_0, d_v_prime, t);
        std::cout << " -- the threshold value for p to be correcting errors is " << p_th << std::endl;
    
-      if(p > (1.0+EPSILON)* p_th ) { //store last valid parameter set
-       std::cout << " -- p is at least " << (1.0+EPSILON)*p_th << 
+      if(p > (1.0+epsilon)* p_th ) { //store last valid parameter set
+       std::cout << " -- p is at least " << (1.0+epsilon)*p_th << 
        "; it corrects the errors" << std::endl;
            p_ok = p; t_ok = t; d_v_ok = d_v;
            for(unsigned i = 0; i < n_0 ; i++){
@@ -234,7 +235,7 @@ int main(int argc, char* argv[]){
           }
       }
       current_prime_pos--;
-  }  while ((p > (1.0+EPSILON)* p_th )  && (current_prime_pos > 0));
+  }  while ((p > (1.0+epsilon)* p_th )  && (current_prime_pos > 0));
 
   std::cout << "parameter set found: p:" << p_ok << " t: " << t_ok;
   std::cout << " d_v : " << d_v_ok << " mpartition: [ ";

@@ -59,7 +59,7 @@ NTL::RR compute_p_ic(const uint64_t d_c,
 
     /* the number of errors falling in the PC equation should be at least 
      * the amount which cannot be placed in a non checked place          */
-    uint64_t LowerTHitBound = (n-d_c) < (t-1) ? (t-1)-(n-d_c) : 0;
+    uint64_t LowerTHitBound = (n-d_c-1) < (t-1) ? (t-1)-(n-d_c-1) : 0;
     /* and it should be even, since the PC equation must be unsatisfied (when 
      * accounting for the one we are considering as already placed*/
     LowerTHitBound = LowerTHitBound % 2 ? LowerTHitBound + 1 : LowerTHitBound;
@@ -76,8 +76,8 @@ NTL::RR compute_p_ic(const uint64_t d_c,
 NTL::RR compute_p_ii(const uint64_t d_c, 
                    const uint64_t n,
                    const uint64_t t){
-    NTL::RR result = NTL::RR(0);
 
+    NTL::RR result = NTL::RR(0);
     uint64_t bound = (d_c - 1) < t - 1 ? d_c - 1 : t - 1;
     
     /* the number of errors falling in the PC equation should be at least 
@@ -103,7 +103,12 @@ NTL::RR ComputePrBitCorrection( const NTL::RR p_ic,
                                 const uint64_t d_v,
                                 const uint64_t t,
                                 const uint64_t threshold ){
-  NTL::RR result, success, failure;
+// 		Pic=0; /* p_correct */
+// 		for (j=b,dv,
+// 			term=binomial(dv,j)*(p_ic^j)*(1-p_ic)^(dv-j);
+// 			Pic=Pic+term;
+// 		);
+  NTL::RR result = NTL::RR(0), success, failure;
   for (uint64_t j = threshold; j <= d_v; j++){
      NTL::pow(success, p_ic, NTL::to_RR(j));
      NTL::pow(failure, NTL::RR(1)-p_ic, NTL::to_RR(d_v-j));
@@ -114,12 +119,13 @@ NTL::RR ComputePrBitCorrection( const NTL::RR p_ic,
 
 /* Probability that a given correct variable is not deemed as such, and is thus
  * fault-induced, given a threshold for the amount of unsatisfied parity check
- * equations. Called P_ci in most texts */
+ * equations. Called P_ci in most texts, p_induce in official comment */
 NTL::RR ComputePrBitFaultInduction( const NTL::RR p_ci,
                                     const uint64_t d_v,
-                                    const uint64_t t,
+                                    const uint64_t t, /* unused */
                                     const uint64_t threshold ){
-  NTL::RR result, success, failure;
+
+  NTL::RR result= NTL::RR(0), success, failure;
   for (uint64_t j = threshold; j <= d_v; j++){
      NTL::pow(success, p_ci, NTL::to_RR(j));
      NTL::pow(failure, NTL::RR(1)-p_ci, NTL::to_RR(d_v-j));
@@ -135,9 +141,6 @@ NTL::RR ComputePrBitCorrectionMulti( const NTL::RR p_ic,
                                 const uint64_t t,
                                 const uint64_t threshold,
                                 const uint64_t toCorrect){
-   if(toCorrect <= 1 ){
-       return NTL::RR(1);
-   }
    NTL::RR ProbCorrectOne = ComputePrBitCorrection(p_ic,d_v,t,threshold);
    return NTL::to_RR(binomial_wrapper(t,toCorrect)) * 
           NTL::pow(ProbCorrectOne,NTL::RR(toCorrect)) *
@@ -145,7 +148,7 @@ NTL::RR ComputePrBitCorrectionMulti( const NTL::RR p_ic,
 }
 
 /* computes the probability that toInduce faults are induced 
- * known as P{N_ci = toInduce} */
+ * known as P{N_ci = toInduce} or Pr{f_wrong = to_induce} */
 NTL::RR ComputePrBitInduceMulti(const NTL::RR p_ci, 
                                 const uint64_t d_v,
                                 const uint64_t t,
@@ -222,19 +225,29 @@ std::pair<NTL::RR,uint64_t> Find1IterTLeftoverPr(const uint64_t n_0,
                                          const uint64_t d_v,
                                          const uint64_t t,
                                          const uint64_t t_leftover){
-    NTL::RR p_ci, p_ic, P_correct, P_induce;
+    NTL::RR p_ci, p_ic;
     NTL::RR DFR, best_DFR = NTL::RR(1);
     p_ci = compute_p_ci(n_0*d_v,n_0*p,t);
     p_ic = compute_p_ic(n_0*d_v,n_0*p,t);
-    uint64_t best_threshold = (d_v - 1)/2;
-    for(uint64_t b = best_threshold; b <= d_v - 1; b++){
-       DFR = 0;
-       for(uint64_t leftover = 0 ; leftover <= t_leftover ; leftover++) {
-          for(uint64_t induced = 0 ; induced <= leftover ; induced++) {
-             NTL::RR prob_curr = ComputePrBitCorrectionMulti(p_ic,d_v,t,b,t-induced) 
-                                   * ComputePrBitInduceMulti(p_ci,d_v,t,n_0*p,b,induced);
-             DFR += prob_curr;
-          }
+    int n= p*n_0;
+    uint64_t best_threshold = (d_v + 1)/2;
+    
+    for(uint64_t b = best_threshold; b <= d_v ; b++){
+       DFR = NTL::RR(0);
+       NTL::RR P_correct = ComputePrBitCorrection(p_ic, d_v, t,b);
+       NTL::RR P_induce = ComputePrBitFaultInduction(p_ci,d_v, t/* unused */,b);
+       for(int tau = 0 ; tau <= t_leftover; tau++){
+         for(int n_to_induce = 0 ; n_to_induce <= t_leftover; n_to_induce++) {
+             NTL::RR prob_induce_n = NTL::to_RR(binomial_wrapper(n-t,n_to_induce)) *
+                                     NTL::pow(P_induce,NTL::to_RR(n_to_induce)) *
+                                     NTL::pow(NTL::RR(1)-P_induce,NTL::to_RR(n-t-n_to_induce));
+             int n_to_correct = (int)t + n_to_induce - tau;
+             NTL::RR prob_correct_n = NTL::to_RR(binomial_wrapper(t,n_to_correct));
+                     prob_correct_n *= NTL::pow(P_correct,NTL::to_RR(n_to_correct));
+
+                     prob_correct_n *= NTL::pow(NTL::RR(1)-P_correct,NTL::to_RR((int)t-n_to_correct)); /*unsigned exp?*/
+             DFR += prob_correct_n*prob_induce_n;
+         }
        }
        DFR = NTL::RR(1) - DFR;
        if (DFR < best_DFR){
@@ -242,7 +255,6 @@ std::pair<NTL::RR,uint64_t> Find1IterTLeftoverPr(const uint64_t n_0,
           best_threshold = b;
        }
     }
-//     std::cout << best_threshold << std::endl;
     return std::make_pair(best_DFR,best_threshold);
 }
 

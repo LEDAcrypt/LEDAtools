@@ -82,11 +82,11 @@ double isd_log_cost_classic_Prange(const uint32_t n,
    NTL::RR num_iter  = NTL::to_RR(binomial_wrapper(n,t)) /
                        NTL::to_RR(binomial_wrapper(n-k,t));
 
-   NTL::RR log_cost = (NTL::log(num_iter)+NTL::log(cost_iter)) / NTL::log(NTL::RR(2));
+   NTL::RR log_cost = log2_RR(num_iter)+ log2_RR(cost_iter);
    return NTL::conv<double>( log_cost );
 }
 
-#define P_MAX_LB 30
+#define P_MAX_LB 20
 double isd_log_cost_classic_LB(const uint32_t n, 
                                const uint32_t k,
                                const uint32_t t) {
@@ -115,7 +115,7 @@ double isd_log_cost_classic_LB(const uint32_t n,
 }
 
 #define P_MAX_Leon P_MAX_LB
-#define L_MAX_Leon 200
+#define L_MAX_Leon 100
 double isd_log_cost_classic_Leon(const uint32_t n, 
                                  const uint32_t k,
                                  const uint32_t t) {
@@ -183,10 +183,16 @@ double isd_log_cost_classic_Stern(const uint32_t n,
                               ( NTL::to_RR(l)*p_real + 
                                 (kHalfChoosePHalf_real / NTL::power2_RR(l))  * NTL::RR(p * (n-k - l)) 
                               );
+// #if LOG_COST_CRITERION == 1
+          NTL::RR log_stern_list_size = kHalfChoosePHalf_real * 
+                                   ( p_real/NTL::RR(2) * NTL::log( k_real/NTL::RR(2))/NTL::log(NTL::RR(2) ) +NTL::to_RR(l)); 
+                  log_stern_list_size = NTL::log(log_stern_list_size) / NTL::log(NTL::RR(2));
+                  cost_iter = cost_iter*log_stern_list_size;
+// #endif
           NTL::RR num_iter  = NTL::to_RR(binomial_wrapper(n,t)) /
                               NTL::to_RR( kHalfChoosePHalf*kHalfChoosePHalf *    
                                           binomial_wrapper(n-k-l,t-p) );
-          log_cost = ( NTL::log(num_iter) + NTL::log(cost_iter) ) / NTL::log(NTL::RR(2));
+          log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
           if(min_log_cost > log_cost){
               min_log_cost = log_cost;
               best_l = l;
@@ -195,7 +201,7 @@ double isd_log_cost_classic_Stern(const uint32_t n,
        }
     }
 
-//    std::cerr << std::endl << "Stern Best l: " << best_l << " best p: " << best_p << std::endl;
+//     std::cerr << std::endl << "Stern Best l: " << best_l << " best p: " << best_p << std::endl;
    return NTL::conv<double>( min_log_cost );
 }
 
@@ -227,10 +233,18 @@ double isd_log_cost_classic_FS(const uint32_t n,
                                 ( kPlusLHalfChoosePHalf_real / NTL::power2_RR(l)) * 
                                   NTL::RR(p * (n-k - l)) 
                               );
+// #if LOG_COST_CRITERION == 1
+          NTL::RR l_real = NTL::to_RR(l);
+          NTL::RR log_FS_list_size = kPlusLHalfChoosePHalf_real * 
+                                   ( p_real/NTL::RR(2) * NTL::log( (k_real+l_real)/NTL::RR(2))/NTL::log(NTL::RR(2) ) +l_real); 
+                  log_FS_list_size = log2_RR(log_FS_list_size);
+                  cost_iter = cost_iter*log_FS_list_size;
+// #endif
           NTL::RR num_iter  = NTL::to_RR(binomial_wrapper(n,t)) /
                               NTL::to_RR( kPlusLHalfChoosePHalf * kPlusLHalfChoosePHalf *
                                           binomial_wrapper(n-k-l,t-p) );
-          log_cost = ( NTL::log(num_iter) + NTL::log(cost_iter) ) / NTL::log(NTL::RR(2));
+                              
+          log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
           if(min_log_cost > log_cost){
               min_log_cost = log_cost;
               best_l = l;
@@ -238,14 +252,14 @@ double isd_log_cost_classic_FS(const uint32_t n,
           }
        }
     }
-//    std::cerr << std::endl << "FS Best l: " << best_l << " best p: " << best_p << std::endl;
+//     std::cerr << std::endl << "FS Best l: " << best_l << " best p: " << best_p << std::endl;
    return NTL::conv<double>( min_log_cost );
 }
 
 #define P_MAX_BJMM 20 // P_MAX_MMT
-#define L_MAX_BJMM 110 //L_MAX_MMT
-#define Eps1_MAX_BJMM 8
-#define Eps2_MAX_BJMM 8
+#define L_MAX_BJMM 90 //L_MAX_MMT
+#define Eps1_MAX_BJMM 4
+#define Eps2_MAX_BJMM 4
 double isd_log_cost_classic_BJMM(const uint32_t n, 
                                  const uint32_t k,
                                  const uint32_t t) {
@@ -277,7 +291,8 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
              constrained_max_l = ( L_MAX_BJMM > (n-k-(t-p)) ? (n-k-(t-p)) : L_MAX_BJMM );
              for(uint32_t  l = 0; l < constrained_max_l; l++){
               /* Available parameters p, p_1,p_2,p_3, l */
-                FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real,n_real-k_real,NTL::RR(l)); 
+                NTL::RR l_real = NTL::RR(l);
+                FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real,n_real-k_real,l_real); 
                 uint32_t p_3 = p_2/2;
 
                 NTL::ZZ L3_list_len = binomial_wrapper((k+l)/2,p_3);
@@ -357,8 +372,16 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
                                      NTL::log(L2_list_len_full) +
                                      NTL::RR(8) * L3_list_len_real * 
                                      NTL::log(L3_list_len_real);
-                       log_cost = ( NTL::log(num_iter) + NTL::log(cost_iter) ) / 
-                                    NTL::log(NTL::RR(2));
+// #if LOG_COST_CRITERION == 1
+          
+          NTL::RR log_BJMM_space = L3_list_len_real * ( p_3 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + NTL::to_RR(r_2)) + 
+                                   L2_list_len_full * ( p_2 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + NTL::to_RR(r_1+r_2)) +
+                                   L1_list_len_full * ( p_1 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + l_real) 
+                                   /* L0 is never materialized, just hot-tested */ ; 
+                  log_BJMM_space = log2_RR(log_BJMM_space);
+                  cost_iter = cost_iter*log_BJMM_space;
+// #endif
+                       log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
                        if(min_log_cost > log_cost){
                            min_log_cost = log_cost;
                            best_l = l;
@@ -374,11 +397,11 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
         } /* end for over eps2 */     
       } /* end for over eps1 */
     } /* end for over p*/
-//    std::cerr << std::endl << "BJMM Best l: " << best_l 
-//                           << " best p: "   << best_p 
-//                           << " best eps1: "  << best_eps_1
-//                           << " best eps2: "  << best_eps_2
-//                           << std::endl;
+//     std::cerr << std::endl << "BJMM Best l: " << best_l 
+//                            << " best p: "   << best_p 
+//                            << " best eps1: "  << best_eps_1
+//                            << " best eps2: "  << best_eps_2
+//                            << std::endl;
    return NTL::conv<double>( min_log_cost );
 }
 
@@ -502,30 +525,30 @@ double c_isd_log_cost(const uint32_t n,
      * for an ISD, the DOOM advantage is just sqrt(p) */
     double qc_red_factor= is_kra ? logl(qc_order) : logl(qc_order)/2.0;
     qc_red_factor = qc_red_factor/logl(2);
-    
+
     std::cout << "Classic ";
     current_cost = isd_log_cost_classic_Prange(n,k,t) - qc_red_factor;
-//     std::cout << "C-Prange: " << std::setprecision(5) << current_cost ;
+//     std::cerr << "C-Prange: " << std::setprecision(5) << current_cost ;
     std::cout << current_cost << " ";
     min_cost = current_cost;
 
     current_cost = isd_log_cost_classic_LB(n,k,t)- qc_red_factor;
-//     std::cout << ", C-Lee-Brickell ISD: " << std::setprecision(5) << current_cost ;
+//     std::cout << ", C-Lee-Brickell ISD: " << std::setprecision(5) << current_cost;
     std::cout << current_cost << " ";
     min_cost = min_cost > current_cost ? current_cost : min_cost;
 
     current_cost = isd_log_cost_classic_Leon(n,k,t)- qc_red_factor;
-//     std::cout << ", C-Leon ISD: " << std::setprecision(5) << current_cost ;
+//      std::cout << ", C-Leon ISD: " << std::setprecision(5) << current_cost ;
     std::cout << current_cost << " ";
     min_cost = min_cost > current_cost ? current_cost : min_cost;
 
     current_cost = isd_log_cost_classic_Stern(n,k,t)- qc_red_factor;
-//     std::cout << ", C-Stern ISD: " << std::setprecision(5) << current_cost ;
+//      std::cout << ", C-Stern ISD: " << std::setprecision(5) << current_cost ;
     std::cout << current_cost << " ";
     min_cost = min_cost > current_cost ? current_cost : min_cost;
 
     current_cost = isd_log_cost_classic_FS(n,k,t)- qc_red_factor;
-//     std::cout << ", C-Fin-Send ISD: " << std::setprecision(5) << current_cost ;
+//      std::cout << ", C-Fin-Send ISD: " << std::setprecision(5) << current_cost ;
     std::cout << current_cost << " ";
     min_cost = min_cost > current_cost ? current_cost : min_cost;
 
