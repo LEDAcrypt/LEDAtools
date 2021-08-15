@@ -2,8 +2,9 @@
 #include <cstdint>
 #include <cmath>
 
-#define NUM_BITS_REAL_MANTISSA 128
+#define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
+// #define EXPLORE_REPRS
 
 #include "binomials.hpp"
 #include "isd_cost_estimate.hpp"
@@ -14,7 +15,7 @@ int main(int argc, char* argv[]){
      std::cout << "Work factor computation for ISD" << std::endl << " Usage " 
                << argv[0] << " <codeword_size> <code_dimension> <number_of_errors> <qc_block_size> <is_kra>" << std::endl << 
                "<qc_block_size> = 1 implies a non QC code " << std::endl << 
-               "<is_kra> = the attack is a KRA on [L|M]DPC " << std::endl;
+               "<is_kra> = the attack is a key recovery attack on a QC-[L|M]DPC " << std::endl;
     return -1;
   }
 
