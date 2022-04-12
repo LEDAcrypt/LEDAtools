@@ -111,9 +111,9 @@ double isd_log_cost_classic_LB(const uint32_t n,
            min_log_cost = log_cost;
            best_p=p;
        }
-   }
-//    std::cerr << std::endl << "Lee-Brickell best p: " << best_p << std::endl;
-   return NTL::conv<double>( min_log_cost );
+    }
+    std::cerr << std::endl << "Lee-Brickell best p: " << best_p << std::endl;
+    return NTL::conv<double>( min_log_cost );
 }
 
 #define P_MAX_Leon P_MAX_LB
@@ -150,7 +150,8 @@ double isd_log_cost_classic_Leon(const uint32_t n,
           }
        }
     }
-   return NTL::conv<double>( min_log_cost );
+    std::cerr << std::endl << "Leon Best l: " << best_l << " best p: " << best_p << std::endl;
+    return NTL::conv<double>( min_log_cost );
 }
 
 
@@ -201,8 +202,8 @@ double isd_log_cost_classic_Stern(const uint32_t n,
        }
     }
 
-//     std::cerr << std::endl << "Stern Best l: " << best_l << " best p: " << best_p << std::endl;
-   return NTL::conv<double>( min_log_cost );
+    std::cerr << std::endl << "Stern Best l: " << best_l << " best p: " << best_p << std::endl;
+    return NTL::conv<double>( min_log_cost );
 }
 
 #define P_MAX_FS P_MAX_Stern 
@@ -252,14 +253,13 @@ double isd_log_cost_classic_FS(const uint32_t n,
           }
        }
     }
-//     std::cerr << std::endl << "FS Best l: " << best_l << " best p: " << best_p << std::endl;
-   return NTL::conv<double>( min_log_cost );
+    std::cerr << std::endl << "FS Best l: " << best_l << " best p: " << best_p << std::endl;
+    return NTL::conv<double>( min_log_cost );
 }
 
 #define P_MAX_MMT (P_MAX_FS+25) // P_MAX_MMT
 #define L_MAX_MMT 350 //L_MAX_MMT
-#define L_MIN_MMT 110
-
+#define L_MIN_MMT 2
 double isd_log_cost_classic_MMT(const uint32_t  n,
                                  const uint32_t k,
                                  const uint32_t t) {
@@ -299,7 +299,7 @@ double isd_log_cost_classic_MMT(const uint32_t  n,
                for(uint32_t l_1 = 1 ; l_1 <= l ; l_1++){
                   uint32_t l_2= l-l_1;
 #else
-                  uint32_t l_2 = NTL::conv<unsigned int>(kPlusLHalfChoosePFourths / NTL::ZZ(p/4));
+                  uint32_t l_2 = NTL::conv<unsigned int>(log2_RR(kPlusLHalfChoosePFourths_real / NTL::to_RR(binomial_wrapper(p,p/2))));
                   /*clamp l_2 to a safe value , 0 < l_2 < l*/
                   l_2 = l_2 <= 0 ? 1 : l_2;
                   l_2 = l_2 >= l ? l-1 : l_2;
@@ -353,7 +353,7 @@ double isd_log_cost_classic_MMT(const uint32_t  n,
    if(best_l == constrained_max_l){
           std::cerr << std::endl << "Warning: l on exploration edge! " << std::endl;
    }
-   std::cerr << log_mem_cost << " ";
+   //std::cerr << log_mem_cost << " ";
    return NTL::conv<double>( min_log_cost );
 }
 
@@ -383,127 +383,110 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
     for(uint32_t p = 2; p < constrained_max_p; p = p+2 ){
         /* sweep over all the valid eps1 knowing that p/2 + eps1 should be a 
          * multiple of 4*/ 
-        for(uint32_t eps1 = 2+(p%2) ; eps1 < Eps1_MAX_BJMM; eps1 = eps1 + 2) {
-           uint32_t p_1 = p/2 + eps1;
-           /* sweep over all the valid eps2 knowing that p_1/2 + eps2 should 
-            * be even */ 
-           for(uint32_t eps2 = (p_1%2) ; eps2 < Eps2_MAX_BJMM; eps2 = eps2 + 2){
-              uint32_t p_2 = p_1/2 + eps2;
+        constrained_max_l = ( L_MAX_BJMM > (n-k-(t-p)) ? (n-k-(t-p)) : L_MAX_BJMM );
+        for(uint32_t  l = 0; l < constrained_max_l; l++){
+            for(uint32_t eps1 = 2+(p%2) ; eps1 < Eps1_MAX_BJMM; eps1 = eps1 + 2) {
+                uint32_t p_1 = p/2 + eps1;
+            /* sweep over all the valid eps2 knowing that p_1/2 + eps2 should 
+             * be even */ 
+                for(uint32_t eps2 = (p_1%2) ; eps2 < Eps2_MAX_BJMM; eps2 = eps2 + 2){
+                    uint32_t p_2 = p_1/2 + eps2;
 
-             constrained_max_l = ( L_MAX_BJMM > (n-k-(t-p)) ? (n-k-(t-p)) : L_MAX_BJMM );
-             for(uint32_t  l = 0; l < constrained_max_l; l++){
-              /* Available parameters p, p_1,p_2,p_3, l */
-                NTL::RR l_real = NTL::RR(l);
-                FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real,n_real-k_real,l_real); 
-                uint32_t p_3 = p_2/2;
+                
+                    /* Available parameters p, p_1,p_2,p_3, l */
+                    NTL::RR l_real = NTL::RR(l);
+                    FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real,n_real-k_real,l_real); 
+                    uint32_t p_3 = p_2/2;
 
-                NTL::ZZ L3_list_len = binomial_wrapper((k+l)/2,p_3);
-                NTL::RR L3_list_len_real = NTL::to_RR(L3_list_len);
-                /* the BJMM number of iterations depends only on L3 parameters
-                 * precompute it */
-                NTL::RR num_iter  = NTL::to_RR( binomial_wrapper(n,t) ) /
-                                    NTL::to_RR( binomial_wrapper((k+l),p) *
-                                                binomial_wrapper(r-l,t-p) 
-                                              );
-                NTL::RR P_invalid_splits = NTL::power(L3_list_len_real,2) /
-                                         NTL::to_RR( binomial_wrapper(k+l,p_2));
-                num_iter = num_iter / NTL::power(P_invalid_splits,4);
+                    NTL::ZZ L3_list_len = binomial_wrapper((k+l)/2,p_3);
+                    NTL::RR L3_list_len_real = NTL::to_RR(L3_list_len);
+                    /* the BJMM number of iterations depends only on L3 parameters
+                    * precompute it */
+                    NTL::RR num_iter  = NTL::to_RR( binomial_wrapper(n,t) ) /
+                                        NTL::to_RR( binomial_wrapper((k+l),p) *
+                                                    binomial_wrapper(r-l,t-p) 
+                                                );
+                    NTL::RR P_invalid_splits = NTL::power(L3_list_len_real,2) /
+                                            NTL::to_RR( binomial_wrapper(k+l,p_2));
+                    num_iter = num_iter / NTL::power(P_invalid_splits,4);
 
-                /* lengths of lists 2 to 0 have to be divided by the number of repr.s*/
-                NTL::RR L2_list_len = NTL::to_RR(binomial_wrapper(k+l,p_2)) * 
-                                      NTL::power(P_invalid_splits,1);
-                NTL::RR L1_list_len = NTL::to_RR(binomial_wrapper(k+l,p_1)) * 
-                                      NTL::power(P_invalid_splits,2);
-                /* estimating the range for r_1 and r_2 requires to compute the
-                 * number of representations rho_1 and rho_2 */
+                    /* lengths of lists 2 to 0 have to be divided by the number of repr.s*/
+                    NTL::RR L2_list_len = NTL::to_RR(binomial_wrapper(k+l,p_2)) * 
+                                        NTL::power(P_invalid_splits,1);
+                    NTL::RR L1_list_len = NTL::to_RR(binomial_wrapper(k+l,p_1)) * 
+                                        NTL::power(P_invalid_splits,2);
+                    /* estimating the range for r_1 and r_2 requires to compute the
+                    * number of representations rho_1 and rho_2 */
 
-                NTL::ZZ rho_2 = binomial_wrapper(p_1,p_1/2) * 
-                                binomial_wrapper(k+l-p_1,eps2);
-                NTL::ZZ rho_1 = binomial_wrapper(p,p/2) * 
-                                binomial_wrapper(k+l-p,eps1);
-                int min_r2 = NTL::conv<int>(NTL::log(NTL::to_RR(rho_2)) / 
-                             NTL::log(NTL::RR(2)));
-                int max_r1 = NTL::conv<int>(NTL::log(NTL::to_RR(rho_1)) / 
-                             NTL::log(NTL::RR(2)));
+                    NTL::ZZ rho_2 = binomial_wrapper(p_1,p_1/2) * 
+                                    binomial_wrapper(k+l-p_1,eps2);
+                    NTL::ZZ rho_1 = binomial_wrapper(p,p/2) * 
+                                    binomial_wrapper(k+l-p,eps1);
+                    int min_r2 = NTL::conv<int>(NTL::log(NTL::to_RR(rho_2)) / 
+                                NTL::log(NTL::RR(2)));
+                    int max_r1 = NTL::conv<int>(NTL::log(NTL::to_RR(rho_1)) / 
+                                NTL::log(NTL::RR(2)));
 
-                /*enumerate r_1 and r_2 over the suggested range 
-                 * log(rho_2) < r2 < r_1 < log(rho_1)*/
-                /* clamp to safe values */
-                min_r2 = min_r2 > 0 ? min_r2 : 1;
-                max_r1 = max_r1 < (int)l ? max_r1 : l-1;
+                    /*enumerate r_1 and r_2 over the suggested range 
+                    * log(rho_2) < r2 < r_1 < log(rho_1)*/
+                    /* clamp to safe values */
+                    min_r2 = min_r2 > 0 ? min_r2 : 1;
+                    max_r1 = max_r1 < (int)l ? max_r1 : l-1;
 
-                NTL::RR p_real = NTL::RR(p);
-                for(int r_2 = min_r2 ; r_2 < max_r1 - 1; r_2++){
-                    for(int r_1 = r_2+1; r_1 < max_r1 ; r_1++){
-                       /*add the cost of building Layer 3 to cost_iter */
-                        NTL::RR cost_iter = NTL::to_RR(8) *
-                                            L3_list_len_real *
-                                            NTL::to_RR(p_3*r_2);
+                    NTL::RR p_real = NTL::RR(p);
+                    for(int r_2 = min_r2 ; r_2 < max_r1 - 1; r_2++){
+                        for(int r_1 = r_2+1; r_1 < max_r1 ; r_1++){
 
-                       /* add the cost of building Layer 2 */
-                       cost_iter += NTL::to_RR(4*(k+l+p_2*(r_1-r_2))) *
-                                    L3_list_len_real *
-                                    L3_list_len_real /
-                                    NTL::power2_RR(r_2);
+                            /*add the cost of building Layer 3 to cost_iter */
+                            NTL::RR cost_iter = NTL::to_RR(4) *
+                                                (k + l + 2*L3_list_len_real +
+                                                r_2 + 
+                                                NTL::power(L3_list_len_real,2)*
+                                                NTL::to_RR(2*p_3*r_2));
 
-                       /* add the cost of building Layer 1 */
-                       NTL::RR b1 = NTL::to_RR(binomial_wrapper(k+l,p_1));
-                       cost_iter += NTL::to_RR(2) / NTL::power2_RR(r_1) * (
-                                       NTL::power(L3_list_len_real,4) / 
-                                       NTL::power2_RR(r_2) *  
-                                       NTL::to_RR(k+l) + 
-                                       b1 * NTL::power(P_invalid_splits,2) * 
-                                       NTL::to_RR(p_1*(l-r_1))
-                                    );
+                             /* add the cost of building Layer 2 */
+                            cost_iter +=    2 * (NTL::power((NTL::to_RR(rho_2) / 
+                                            (NTL::power2_RR(r_2)))*
+                                            NTL::power(L3_list_len_real,2),2) 
+                                            * 2 * p_2 * (r_1-r_2));
 
-                       /* add the cost of building L0 */
-                       cost_iter +=  NTL::power(P_invalid_splits,4) / 
-                                     NTL::power2_RR(l) * (
-                                        NTL::power(b1,2) / NTL::power2_RR(r_1) *
-                                        NTL::to_RR(k+l)+ 
-                                        NTL::to_RR(binomial_wrapper(k+l,p)) *
-                                        NTL::to_RR(p*(n-k-l))
-                                    );
+                            /* add the cost of building Layer 1 */
+                            cost_iter +=    NTL::power((NTL::to_RR(rho_1) / 
+                                            NTL::power2_RR(r_1)) * 
+                                            (NTL::to_RR(rho_2) / 
+                                            NTL::power2_RR(r_2))*
+                                            NTL::power(L3_list_len_real,2),4) * 2 * p_1 * l;
 
-                       NTL::RR L1_list_len_full = L1_list_len / NTL::power2_RR(r_1);
-                       NTL::RR L2_list_len_full = L2_list_len / NTL::power2_RR(r_2);
-                       /* add cost for sorting all lists */
-                       cost_iter +=  NTL::RR(2) * L1_list_len_full * 
-                                     NTL::log(L1_list_len_full) +
-                                     NTL::RR(4) * L2_list_len_full * 
-                                     NTL::log(L2_list_len_full) +
-                                     NTL::RR(8) * L3_list_len_real * 
-                                     NTL::log(L3_list_len_real);
-// #if LOG_COST_CRITERION == 1
-          
-          NTL::RR log_BJMM_space = L3_list_len_real * ( p_3 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + NTL::to_RR(r_2)) + 
-                                   L2_list_len_full * ( p_2 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + NTL::to_RR(r_1+r_2)) +
-                                   L1_list_len_full * ( p_1 * log2_RR( (k_real+l_real)/NTL::RR(2) )  + l_real) 
-                                   /* L0 is never materialized, just hot-tested */ ; 
-                  log_BJMM_space = log2_RR(log_BJMM_space);
-                  cost_iter = cost_iter*log_BJMM_space;
-// #endif
-                       log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
-                       if(min_log_cost > log_cost){
-                           min_log_cost = log_cost;
-                           best_l = l;
-                           best_p = p;
-                           best_eps_1 = eps1;
-                           best_eps_2 = eps2;
-                       }
+                             /* add the cost of building L0 */
+                            cost_iter +=    p * (r - l) * 
+                                            NTL::power((NTL::to_RR(rho_1) / NTL::power2_RR(r_1)) * 
+                                            (NTL::to_RR(rho_2) / 
+                                            NTL::power2_RR(r_2))*
+                                            NTL::power(L3_list_len_real,2),4)
+                                            / NTL::to_RR(l);
+
+                            log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
+
+                            if(min_log_cost >  log_cost){
+                                min_log_cost = log_cost;
+                                best_l = l;
+                                best_p = p;
+                                best_eps_1 = eps1;
+                                best_eps_2 = eps2;
+                            }
+                        }
                     }
-                }
 
-             } /*end of iteration over l */
-         /* to review up to to here */  
-        } /* end for over eps2 */     
-      } /* end for over eps1 */
+                } /*end of iteration over l */
+            /* to review up to to here */  
+            } /* end for over eps2 */     
+         } /* end for over eps1 */
     } /* end for over p*/
-//     std::cerr << std::endl << "BJMM Best l: " << best_l 
-//                            << " best p: "   << best_p 
-//                            << " best eps1: "  << best_eps_1
-//                            << " best eps2: "  << best_eps_2
-//                            << std::endl;
+    std::cerr << std::endl << "BJMM Best l: " << best_l 
+                            << " best p: "   << best_p 
+                            << " best eps1: "  << best_eps_1
+                            << " best eps2: "  << best_eps_2
+                            << std::endl;
    return NTL::conv<double>( min_log_cost );
 }
 
@@ -695,4 +678,3 @@ double q_isd_log_cost(const uint32_t n,
 
     return min_cost;
 }
-
