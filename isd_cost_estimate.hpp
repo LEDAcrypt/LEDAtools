@@ -3,6 +3,8 @@
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
 #include <iomanip>
+#include <iostream>
+#include <cmath>
 
 /***************************Classic ISDs***************************************/
 
@@ -495,30 +497,32 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
 
 const NTL::RR quantum_gauss_red_cost(const NTL::RR &n, 
                                      const NTL::RR & k) {
-    return 0.5* NTL::power(n-k,3) + k*NTL::power((n-k),2);
+  // return 0.5* NTL::power(n-k,3) + k*NTL::power((n-k),2);
+  return 1.5 * NTL::power(n - k, 2) - 0.5 * (n-k);
 }
 
+double isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
+                               const uint32_t t, const uint32_t p) {
+  NTL::RR n_real = NTL::RR(n);
+  NTL::RR k_real = NTL::RR(k);
+  NTL::RR t_real = NTL::RR(t);
+  NTL::RR p_real = NTL::RR(p);
+  NTL::RR log_pi_fourths = NTL::log(pi * 0.25);
+  NTL::RR log_pinv = log_probability_k_by_k_is_inv(k_real);
 
-double isd_log_cost_quantum_LB(const uint32_t n, 
-                               const uint32_t k,
-                               const uint32_t t) {
-    NTL::RR n_real = NTL::RR(n);
-    NTL::RR k_real = NTL::RR(k);
-    NTL::RR t_real = NTL::RR(t);
-    NTL::RR log_pi_fourths = NTL::log(pi*0.25);
-    NTL::RR log_pinv = log_probability_k_by_k_is_inv(k_real);
-    NTL::RR iteration_cost = quantum_gauss_red_cost(n_real,k_real) +
-                             NTL::to_RR(binomial_wrapper(k,2) * 2 * (n-k));
-    NTL::RR log_cost = (lnBinom(n_real,t_real) - 
-                        (lnBinom(k_real,NTL::RR(2)) + 
-                         lnBinom(n_real-k_real,t-NTL::RR(2))) 
-                       )*0.5 + 
-                       log_pi_fourths; 
-    log_cost += NTL::log(iteration_cost);
-    log_cost = log_cost / NTL::log(NTL::RR(2));
-    return NTL::conv<double>( log_cost );
+  /* Check https://doi.org/10.1007/978-3-031-61489-7_2
+   * for the full measures of the lee-brickell quantum attack
+   */
+  NTL::RR iteration_cost = quantum_gauss_red_cost(n_real, k_real) +
+                           NTL::to_RR(binomial_wrapper(k, p)) *
+                               NTL::log(n_real - k_real) / NTL::log(NTL::RR(2));
+  NTL::RR log_cost = log_pi_fourths + .5*
+    (lnBinom(n_real, t_real) - log_pinv - (lnBinom(k_real, p_real) +
+                                           lnBinom(n_real - k_real, t_real - p_real)));
+  log_cost += NTL::log(iteration_cost);
+  log_cost = log_cost / NTL::log(NTL::RR(2));
+  return NTL::conv<double>(log_cost);
 }
-
 
 #define MAX_M (t/2)
 
@@ -665,7 +669,9 @@ double q_isd_log_cost(const uint32_t n,
     qc_red_factor = qc_red_factor/logl(2);
     std::cout << "Quantum ";
 
-    current_cost = isd_log_cost_quantum_LB(n,k,t)- qc_red_factor;
+    // TODO: fix. This is just a quick hack since experiments says that p = 1 is
+    // the optimal value at least for the NIST code-based finalists
+    current_cost = isd_log_cost_quantum_LB(n, k, t, 1) - qc_red_factor;
     std::cout << current_cost << " ";
 //     std::cout << " Q-Lee-Brickell ISD: " << /**/current_cost << std::endl;
     min_cost = current_cost;
