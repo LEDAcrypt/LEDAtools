@@ -1,6 +1,5 @@
 #include <NTL/ZZ.h>
 #include <cstdint>
-#include <cmath>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
@@ -8,7 +7,8 @@
 
 #include "binomials.hpp"
 #include "isd_cost_estimate.hpp"
-#include <cmath>
+#include <iostream>
+#include <cstdlib>
 
 int main(int argc, char* argv[]){
   if(argc != 6){
@@ -29,7 +29,8 @@ int main(int argc, char* argv[]){
   uint32_t is_kra = atoi(argv[5]);
   
   /* reduce by a factor matching the QC block size */
-  std::cout << "Minimum classic cost :" << c_isd_log_cost(n,k,t,qc_block_size,is_kra) << " Minimum quantum cost :" << q_isd_log_cost(n,k,t,qc_block_size,is_kra);
+  bool subtract_red_factor = false;
+  std::cout << "Minimum classic cost :" << c_isd_log_cost(n,k,t,qc_block_size,is_kra, subtract_red_factor) << " Minimum quantum cost :" << q_isd_log_cost(n,k,t,qc_block_size,is_kra,subtract_red_factor);
   if(qc_block_size !=1) std::cout << " (including qc_effects) ";
   std::cout << std::endl;
   return 0;
