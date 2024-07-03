@@ -603,8 +603,7 @@ double isd_log_cost_quantum_stern(const uint32_t n,
 
 /***************************Aggregation ***************************************/
 
-double get_qc_red_factor_log(const uint32_t n, const uint32_t k, const uint32_t t,
-                         const uint32_t qc_order, const uint32_t is_kra) {
+double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
   /* for key recovery attacks the advantage from quasi-cyclicity is p,
    * for an ISD, the DOOM advantage is just sqrt(p) */
   double qc_red_factor = is_kra ? logl(qc_order) : logl(qc_order) / 2.0;
@@ -616,7 +615,7 @@ double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor) {
   double min_cost = n, current_cost;
-  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(n, k, t, qc_order, is_kra): 0;
+  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
 
   std::cout << "Classic ";
   current_cost = isd_log_cost_classic_Prange(n, k, t) - qc_red_factor;
@@ -672,7 +671,7 @@ double q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
   /* for key recovery attacks the advantage from quasi-cyclicity is p,
    * for an ISD, the DOOM advantage is just sqrt(p) */
   std::cout << "Quantum ";
-  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(n, k, t, qc_order, is_kra): 0;
+  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
 
   /* This is just a quick hack since experiments says that p = 1 is
    * the optimal value at least for the NIST code-based finalists
