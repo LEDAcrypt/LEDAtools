@@ -604,8 +604,9 @@ double isd_log_cost_quantum_stern(const uint32_t n,
 /***************************Aggregation ***************************************/
 
 double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
-  /* for key recovery attacks the advantage from quasi-cyclicity is p,
-   * for an ISD, the DOOM advantage is just sqrt(p) */
+  /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
+   * a message recovery (SDP), the DOOM advantage is sqrt(p).
+   */
   double qc_red_factor = is_kra ? logl(qc_order) : logl(qc_order) / 2.0;
   return qc_red_factor / logl(2);
 }
