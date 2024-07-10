@@ -4,7 +4,8 @@
 
 #define NUM_BITS_REAL_MANTISSA 128
 #define IGNORE_DECODING_COST 0
-#define SKIP_BJMM 0
+#define SKIP_BJMM 1
+#define SKIP_MMT 1
 #define LOG_COST_CRITERION 1
 
 #include "binomials.hpp"

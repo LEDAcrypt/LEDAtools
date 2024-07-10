@@ -649,17 +649,20 @@ double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
 
+#if SKIP_MMT == 0
   current_cost = isd_log_cost_classic_MMT(n, k, t) - qc_red_factor;
   std::cerr << "Classic MMT ISD: " << std::setprecision(5) << current_cost
             << std::endl;
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
 #if SKIP_BJMM == 0
-    current_cost = isd_log_cost_classic_BJMM(n,k,t)- qc_red_factor;
-    std::cerr << "Classic BJMM ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_BJMM(n, k, t) - qc_red_factor;
+  std::cerr << "Classic BJMM ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
 #endif
     std::cout << std::endl;
 
