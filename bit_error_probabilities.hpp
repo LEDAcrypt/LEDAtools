@@ -2,6 +2,7 @@
 #include <NTL/RR.h>
 #include <utility>
 #include "proper_primes.hpp"
+#include "binomials.hpp"
 
 // choice of the approximation praxis for the estimated fraction of an error
 // to appear in the next iteration of a bit-flipping decoder

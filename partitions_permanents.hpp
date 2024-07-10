@@ -1,3 +1,6 @@
+#include <cstdint>
+#include <iostream>
+
 /*
  Permanent formulas for circulant matrices as obtained via Sage (macsyma)
 
