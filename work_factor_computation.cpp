@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
             << " Minimum quantum cost :"
             << q_isd_log_cost(n, k, t, qc_block_size, is_kra,
                               is_red_factor_applied);
-  if (qc_block_size != 1)
+  if (is_red_factor_applied && qc_block_size != 1)
     std::cout << " (including qc_effects) ";
   std::cout << std::endl;
   return 0;
