@@ -14,10 +14,13 @@
 
 #include "binomials.hpp"
 #include "isd_cost_estimate.hpp"
+#include "logging.hpp"
 #include <iostream>
 
+int main() {
+  // Configure the logger
+  configure_logger();
 
-int main(int argc, char *argv[]) {
   std::ifstream file("out/isd_values.json");
 
   // Check if the file is open
@@ -34,8 +37,8 @@ int main(int argc, char *argv[]) {
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();
   bool is_kra_values[] = {true, false};
-  // Iterate over the list of entries
-  #pragma omp parallel for
+// Iterate over the list of entries
+#pragma omp parallel for
   for (const auto &entry : j) {
     uint32_t n = entry["n"];
     uint32_t r = entry["r"];
@@ -51,6 +54,9 @@ int main(int argc, char *argv[]) {
     // std::cout << "n: " << n << ", r: " << r << ", t: " << t << std::endl;
 
     for (bool is_kra : is_kra_values) {
+      spdlog::info("Processing n {}, k {}, t {}, qc_block_size {}, is_kra {}, "
+                   "is_red_factor_applied {}",
+                   n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       double min_c_cost =
           c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       double min_q_cost =

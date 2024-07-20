@@ -1,6 +1,7 @@
-CXXFLAGS=-O3 -g3 -std=c++11 -Wall -Wextra -Wno-sign-compare
+CXX = g++
+CXXFLAGS=-O3 -g3 -std=c++17 -Wall -Wextra -Wno-sign-compare
 OMPFLAGS=-fopenmp
-LDLIBS= -lntl -lgmp -lm
+LDLIBS= -lntl -lgmp -lm -lspdlog -lfmt
 BIN_DIR=bin
 TARGETS=constant_weight_encodable_bits enumeration_complexity parameter_generator work_factor_computation work_factor_computation_parallel
 BIN_TARGETS=$(addprefix $(BIN_DIR)/, $(TARGETS))
