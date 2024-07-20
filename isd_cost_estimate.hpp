@@ -6,6 +6,16 @@
 #include <iostream>
 #include <cmath>
 
+#define SKIP_PRANGE 1
+#define SKIP_LB 1
+#define SKIP_LEON 1
+#define SKIP_STERN 0
+#define SKIP_FS 1
+#define SKIP_BJMM 1
+#define SKIP_MMT 1
+#define SKIP_Q_LB 0
+#define SKIP_Q_STERN 1
+
 /***************************Classic ISDs***************************************/
 
 double isd_log_cost_classic_BJMM_approx(const uint32_t n, 
@@ -615,39 +625,52 @@ double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
 double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor) {
-  double min_cost = n, current_cost;
-  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
+  double min_cost, current_cost;
+  double qc_red_factor =
+      compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
+
+  min_cost = std::numeric_limits<double>::max();
 
   std::cout << "Classic ";
+#if SKIP_PRANGE == 0
   current_cost = isd_log_cost_classic_Prange(n, k, t) - qc_red_factor;
   std::cerr << "Classic Prange: " << std::setprecision(5) << current_cost
             << std::endl;
   std::cout << current_cost << " ";
-  min_cost = current_cost;
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
+#if SKIP_LB == 0
   current_cost = isd_log_cost_classic_LB(n, k, t) - qc_red_factor;
   std::cerr << "Classic Lee-Brickell ISD: " << std::setprecision(5)
             << current_cost << std::endl;
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
+#if SKIP_LEON == 0
   current_cost = isd_log_cost_classic_Leon(n, k, t) - qc_red_factor;
   std::cerr << "Classic Leon ISD: " << std::setprecision(5) << current_cost
             << std::endl;
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
+#if SKIP_STERN == 0
   current_cost = isd_log_cost_classic_Stern(n, k, t) - qc_red_factor;
   std::cerr << "Classic Stern ISD: " << std::setprecision(5) << current_cost
             << std::endl;
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
+#if SKIP_FS == 0
   current_cost = isd_log_cost_classic_FS(n, k, t) - qc_red_factor;
   std::cerr << "Classic Fin-Send ISD: " << std::setprecision(5) << current_cost
             << std::endl;
   std::cout << current_cost << " ";
   min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
 #if SKIP_MMT == 0
   current_cost = isd_log_cost_classic_MMT(n, k, t) - qc_red_factor;
@@ -671,25 +694,27 @@ double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 
 double q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra, const bool compute_qc_reduction_factor) {
-  double min_cost = n, current_cost;
-  /* for key recovery attacks the advantage from quasi-cyclicity is p,
-   * for an ISD, the DOOM advantage is just sqrt(p) */
+  double min_cost, current_cost;
   std::cout << "Quantum ";
   double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
+
+  min_cost = std::numeric_limits<double>::max();
 
   /* This is just a quick hack since experiments says that p = 1 is
    * the optimal value at least for the NIST code-based finalists
    */
+#if SKIP_Q_LB == 0
   current_cost = isd_log_cost_quantum_LB(n, k, t, 1) - qc_red_factor;
-  std::cout << current_cost << " ";
-  //     std::cout << " Q-Lee-Brickell ISD: " << /**/current_cost << std::endl;
-  min_cost = current_cost;
+  std::cout << " Q-Lee-Brickell ISD: " << /**/current_cost << std::endl;
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
+#if SKIP_Q_STERN == 0
   current_cost = isd_log_cost_quantum_stern(n, k, t) - qc_red_factor;
-  std::cout << current_cost << " ";
-  //     std::cout << ", Q-Stern ISD: " << current_cost << std::endl;
+  std::cout << ", Q-Stern ISD: " << current_cost << std::endl;
   min_cost = min_cost > current_cost ? current_cost : min_cost;
   std::cout << std::endl;
+#endif
 
   return min_cost;
 }
