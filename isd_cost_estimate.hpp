@@ -729,7 +729,7 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 #endif
 
 #if SKIP_STERN == 0
-  current_res = isd_log_cost_classic_LB(n, k, t);
+  current_res = isd_log_cost_classic_Stern(n, k, t);
   current_res.value -= qc_red_factor;
   if (current_res.value < min_cost) {
     min_res = current_res;
@@ -756,7 +756,7 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 #endif
 
 #if SKIP_BJMM == 0
-  current_res = isd_log_cost_classic_LB(n, k, t);
+  current_res = isd_log_cost_classic_BJMM(n, k, t);
   current_res.value -= qc_red_factor;
   if (current_res.value < min_cost) {
     min_res = current_res;
