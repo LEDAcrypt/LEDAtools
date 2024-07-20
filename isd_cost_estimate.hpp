@@ -689,7 +689,6 @@ double q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor) {
   double min_cost, current_cost;
-  std::cout << "Quantum ";
   double qc_red_factor =
       compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
 
