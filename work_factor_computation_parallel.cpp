@@ -17,6 +17,17 @@
 #include "logging.hpp"
 #include <iostream>
 
+void to_json(nlohmann::json &j, const Result &r) {
+  j = nlohmann::json{
+      {"alg_name", r.alg_name}, {"params", r.params}, {"value", r.value}};
+}
+
+void from_json(const nlohmann::json &j, Result &r) {
+  j.at("alg_name").get_to(r.alg_name);
+  j.at("params").get_to(r.params);
+  j.at("value").get_to(r.value);
+}
+
 int main() {
   // Configure the logger
   configure_logger(std::nullopt);
@@ -50,17 +61,20 @@ int main() {
     // int v = entry["v"];
     // int lambd = entry["lambd"];
 
+    Result current_c_res;
+    Result current_q_res;
+
     for (bool is_kra : is_kra_values) {
       spdlog::info("Processing n {}, k {}, t {}, qc_block_size {}, is_kra {}, "
                    "is_red_factor_applied {}",
                    n, k, t, qc_block_size, is_kra, is_red_factor_applied);
-      double min_c_cost =
+      current_c_res = 
           c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied);
-      double min_q_cost =
+      current_q_res = 
           q_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       nlohmann::json out_values;
-      out_values["C2"] = min_c_cost;
-      out_values["Q2"] = min_q_cost;
+      out_values["C2"] = current_c_res;
+      out_values["Q2"] = current_q_res;
 
       std::ostringstream oss;
       oss << std::setw(6) << std::setfill('0') << n << "_" << std::setw(6)

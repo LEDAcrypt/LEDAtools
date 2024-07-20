@@ -33,9 +33,9 @@ uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
     t = (lo + hi) / 2;
     std::cerr << "testing t " << t << std::endl;
     achieved_c_sec_level =
-        c_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true);
+        c_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true).value;
     achieved_q_sec_level =
-        q_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true);
+        q_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true).value;
     if ((achieved_c_sec_level >= c_sec_level) &&
         (achieved_q_sec_level >= q_sec_level)) {
       hi = t;
@@ -108,9 +108,9 @@ estimate_dv(const uint32_t c_sec_level, // expressed as
         /* last parameter indicates a KRA, reduce margin by p due to
         quasi cyclicity */
         achieved_c_sec_level =
-            c_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true);
+            c_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true).value;
         achieved_q_sec_level =
-            q_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true);
+            q_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true).value;
       }
     }
 

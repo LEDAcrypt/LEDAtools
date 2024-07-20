@@ -49,10 +49,10 @@ int main(int argc, char *argv[]) {
 
   std::cout << "Minimum classic cost :"
             << c_isd_log_cost(n, k, t, qc_block_size, is_kra,
-                              is_red_factor_applied)
+                              is_red_factor_applied).value
             << " Minimum quantum cost :"
             << q_isd_log_cost(n, k, t, qc_block_size, is_kra,
-                              is_red_factor_applied);
+                              is_red_factor_applied).value;
   if (is_red_factor_applied && qc_block_size != 1)
     std::cout << " (including qc_effects) ";
   std::cout << std::endl;

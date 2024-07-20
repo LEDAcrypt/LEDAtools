@@ -4,8 +4,6 @@
 #include <NTL/RR.h>
 #include <NTL/ZZ.h>
 #include <cmath>
-#include <iomanip>
-#include <iostream>
 #include <optional>
 
 #define SKIP_PRANGE 1
@@ -18,11 +16,21 @@
 #define SKIP_Q_LB 0
 #define SKIP_Q_STERN 1
 
+struct Result {
+  std::string alg_name;
+  std::map<std::string, int> params;
+  double value;
+};
+
 /***************************Classic ISDs***************************************/
 
-double isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
                                         const uint32_t t) {
-  return ((double)t) * -log((1.0 - (double)k / (double)n)) / log(2);
+  Result result;
+  result.alg_name = "BJMM";
+  result.params = {{"approx", true}};
+  result.value = ((double)t) * -log((1.0 - (double)k / (double)n)) / log(2);
+  return result;
 }
 
 // computes the probability of a random k * k being invertible
@@ -72,7 +80,7 @@ const NTL::RR Fin_Send_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r,
          r * r;
 }
 
-double isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
                                    const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -83,11 +91,16 @@ double isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
                      NTL::to_RR(binomial_wrapper(n - k, t));
 
   NTL::RR log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
-  return NTL::conv<double>(log_cost);
+
+  Result res;
+  res.alg_name = "Prange";
+  res.params = {};
+  res.value = NTL::conv<double>(log_cost);
+  return res;
 }
 
 #define P_MAX_LB 20
-double isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
                                const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -113,12 +126,16 @@ double isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("Lee-Brickell best p: {}", best_p);
-  return NTL::conv<double>(min_log_cost);
+  Result res;
+  res.alg_name = "Lee-Brickell";
+  res.params = {{"p", best_p}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define P_MAX_Leon P_MAX_LB
 #define L_MAX_Leon 200
-double isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
                                  const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -152,12 +169,16 @@ double isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("Leon Best l {} best p: {}", best_l, best_p);
-  return NTL::conv<double>(min_log_cost);
+  Result res;
+  res.alg_name = "Lee-Brickell";
+  res.params = {{"p", best_p}, {"l", best_l}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define P_MAX_Stern P_MAX_Leon
 #define L_MAX_Stern L_MAX_Leon
-double isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
                                   const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -207,12 +228,16 @@ double isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   }
 
   spdlog::info("Stern Best l {}, best p: {}", best_l, best_p);
-  return NTL::conv<double>(min_log_cost);
+  Result res;
+  res.alg_name = "Stern";
+  res.params = {{"p", best_p}, {"l", best_l}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define P_MAX_FS P_MAX_Stern
 #define L_MAX_FS L_MAX_Stern
-double isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
                                const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -263,13 +288,17 @@ double isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("FS Best l {}, best p: {}", best_l, best_p);
-  return NTL::conv<double>(min_log_cost);
+  Result res;
+  res.alg_name = "Fin-Send";
+  res.params = {{"p", best_p}, {"l", best_l}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define P_MAX_MMT (P_MAX_FS + 25) // P_MAX_MMT
 #define L_MAX_MMT 350             // L_MAX_MMT
 #define L_MIN_MMT 2
-double isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
                                 const uint32_t t) {
   uint32_t r = n - k;
   NTL::RR n_real = NTL::RR(n);
@@ -372,14 +401,18 @@ double isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
   if (best_l == constrained_max_l) {
     spdlog::warn("Warning: l {l} on exploration edge!");
   }
-  return NTL::conv<double>(min_log_cost);
+  Result res;
+  res.alg_name = "MMT";
+  res.params = {{"p", best_p}, {"l", best_l}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define P_MAX_BJMM 20 // P_MAX_MMT
 #define L_MAX_BJMM 90 // L_MAX_MMT
 #define Eps1_MAX_BJMM 4
 #define Eps2_MAX_BJMM 4
-double isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
+Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
                                  const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -389,8 +422,8 @@ double isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
 
   NTL::RR min_log_cost = n_real; // unreachable upper bound
   NTL::RR log_cost;
-  std::optional<uint32_t> best_p, best_l, best_eps_1, best_eps_2,
-      constrained_max_l, constrained_max_p;
+  std::optional<uint32_t> best_p, best_l, best_eps_1, best_eps_2;
+  uint32_t constrained_max_l, constrained_max_p;
 
   NTL::RR FS_IS_candidate_cost;
   constrained_max_p = P_MAX_BJMM > t ? t : P_MAX_BJMM;
@@ -501,16 +534,21 @@ double isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
     } /* end for over eps1 */
   } /* end for over p*/
 
-  if (!best_l || !best_eps_1 || !constrained_max_l || !constrained_max_p) {
+  if (!best_l || !best_eps_1 || !best_p || !best_eps_2) {
     spdlog::error("Error: One or more variables are not initialized.");
     throw std::runtime_error("One or more variables are not initialized.");
-  } else {
-    spdlog::info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
-                 optional_to_string(best_l), optional_to_string(best_eps_1),
-                 optional_to_string(constrained_max_l),
-                 optional_to_string(constrained_max_p));
   }
-  return NTL::conv<double>(min_log_cost);
+  spdlog::info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
+               optional_to_string(best_l), optional_to_string(best_p),
+               optional_to_string(best_eps_1), optional_to_string(best_eps_2));
+  Result res;
+  res.alg_name = "BJMM";
+  res.params = {{"p", best_p.value()},
+                {"l", best_l.value()},
+                {"eps1", best_eps_1.value()},
+                {"eps2", best_eps_2.value()}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 /***************************Quantum ISDs***************************************/
@@ -520,33 +558,53 @@ const NTL::RR quantum_gauss_red_cost(const NTL::RR &n, const NTL::RR &k) {
   return 1.5 * NTL::power(n - k, 2) - 0.5 * (n - k);
 }
 
-double isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
-                               const uint32_t t, const uint32_t p) {
+#define P_MAX_Q_LB 3 // P_MAX_MMT
+Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
+                               const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
   NTL::RR t_real = NTL::RR(t);
-  NTL::RR p_real = NTL::RR(p);
   NTL::RR log_pi_fourths = NTL::log(pi * 0.25);
   NTL::RR log_pinv = log_probability_k_by_k_is_inv(k_real);
 
   /* Check https://doi.org/10.1007/978-3-031-61489-7_2
    * for the full measures of the lee-brickell quantum attack
    */
-  NTL::RR iteration_cost = quantum_gauss_red_cost(n_real, k_real) +
-                           NTL::to_RR(binomial_wrapper(k, p)) *
-                               NTL::log(n_real - k_real) / NTL::log(NTL::RR(2));
-  NTL::RR log_cost =
-      log_pi_fourths + .5 * (lnBinom(n_real, t_real) - log_pinv -
-                             (lnBinom(k_real, p_real) +
-                              lnBinom(n_real - k_real, t_real - p_real)));
-  log_cost += NTL::log(iteration_cost);
-  log_cost = log_cost / NTL::log(NTL::RR(2));
-  return NTL::conv<double>(log_cost);
+  NTL::RR min_log_cost = n_real; // unreachable upper bound
+  uint32_t p;
+  std::optional<uint32_t> best_p;
+  for (p = 1; p < P_MAX_Q_LB; p++) {
+    NTL::RR p_real = NTL::RR(p);
+    NTL::RR iteration_cost = quantum_gauss_red_cost(n_real, k_real) +
+                             NTL::to_RR(binomial_wrapper(k, p)) *
+                                 NTL::log(n_real - k_real) /
+                                 NTL::log(NTL::RR(2));
+    NTL::RR log_cost =
+        log_pi_fourths + .5 * (lnBinom(n_real, t_real) - log_pinv -
+                               (lnBinom(k_real, p_real) +
+                                lnBinom(n_real - k_real, t_real - p_real)));
+    log_cost += NTL::log(iteration_cost);
+    log_cost = log_cost / NTL::log(NTL::RR(2));
+    if (log_cost < min_log_cost) {
+      min_log_cost = log_cost;
+      best_p = p;
+    }
+  }
+  if (!best_p) {
+    spdlog::error("Error: One or more variables are not initialized.");
+    throw std::runtime_error("One or more variables are not initialized.");
+  }
+
+  Result res;
+  res.alg_name = "Quantum Lee-Brickell";
+  res.params = {{"p", best_p.value()}};
+  res.value = NTL::conv<double>(min_log_cost);
+  return res;
 }
 
 #define MAX_M (t / 2)
 
-double isd_log_cost_quantum_stern(const uint32_t n, const uint32_t k,
+Result isd_log_cost_quantum_stern(const uint32_t n, const uint32_t k,
                                   const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -617,7 +675,11 @@ double isd_log_cost_quantum_stern(const uint32_t n, const uint32_t k,
       min_stern_complexity = current_complexity;
     }
   }
-  return NTL::conv<double>(min_stern_complexity / NTL::log(NTL::RR(2.0)));
+  Result res;
+  res.alg_name = "Quantum Stern";
+  res.params = {};
+  res.value = NTL::conv<double>(min_stern_complexity / NTL::log(NTL::RR(2.0)));
+  return res;
 }
 
 /***************************Aggregation ***************************************/
@@ -630,84 +692,109 @@ double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
   return qc_red_factor / logl(2);
 }
 
-double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
+Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor) {
-  double min_cost, current_cost;
+  Result current_res, min_res;
   double qc_red_factor =
       compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
 
-  min_cost = std::numeric_limits<double>::max();
+  double min_cost = n; // the cost cannot be greater than 2^n
 
 #if SKIP_PRANGE == 0
-  current_cost = isd_log_cost_classic_Prange(n, k, t) - qc_red_factor;
-  spdlog::info("Classic Prange: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_Prange(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_LB == 0
-  current_cost = isd_log_cost_classic_LB(n, k, t) - qc_red_factor;
-  spdlog::info("Classic Lee-Brickell: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_LB(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_LEON == 0
-  current_cost = isd_log_cost_classic_Leon(n, k, t) - qc_red_factor;
-  spdlog::info("Classic Leon: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_Leon(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_STERN == 0
-  current_cost = isd_log_cost_classic_Stern(n, k, t) - qc_red_factor;
-  spdlog::info("Classic Stern: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_LB(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_FS == 0
-  current_cost = isd_log_cost_classic_FS(n, k, t) - qc_red_factor;
-  spdlog::info("Classic Fin-Send: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_FS(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_MMT == 0
-  current_cost = isd_log_cost_classic_MMT(n, k, t) - qc_red_factor;
-  spdlog::info("Classic MMT: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_MMT(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_BJMM == 0
-  current_cost = isd_log_cost_classic_BJMM(n, k, t) - qc_red_factor;
-  spdlog::info("Classic BJMM: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_LB(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
-  std::cout << std::endl;
 
-  return min_cost;
+  return min_res;
 }
 
-double q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
+Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor) {
-  double min_cost, current_cost;
+  Result current_res, min_res;
+  double min_cost = n; // cannot be greater than n
   double qc_red_factor =
       compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
-
-  min_cost = std::numeric_limits<double>::max();
 
   /* This is just a quick hack since experiments says that p = 1 is
    * the optimal value at least for the NIST code-based finalists
    */
 #if SKIP_Q_LB == 0
-  current_cost = isd_log_cost_quantum_LB(n, k, t, 1) - qc_red_factor;
-  spdlog::info("Quantum Lee-Brickell: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_quantum_LB(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
 #if SKIP_Q_STERN == 0
-  current_cost = isd_log_cost_quantum_stern(n, k, t) - qc_red_factor;
-  spdlog::info("Quantum Stern: {:.5f}", current_cost);
-  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_res = isd_log_cost_classic_stern(n, k, t);
+  current_res.value -= qc_red_factor;
+  if (current_res.value < min_cost) {
+    min_res = current_res;
+    min_cost = current_res.value;
+  }
 #endif
 
-  return min_cost;
+  return min_res;
 }
