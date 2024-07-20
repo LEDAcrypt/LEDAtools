@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS=-O3 -g3 -std=c++17 -Wall -Wextra -Wno-sign-compare
+CXXFLAGS=-O3 -g3 -std=c++20 -Wall -Wextra -Wno-sign-compare
 OMPFLAGS=-fopenmp
 LDLIBS= -lntl -lgmp -lm -lspdlog -lfmt
 BIN_DIR=bin
