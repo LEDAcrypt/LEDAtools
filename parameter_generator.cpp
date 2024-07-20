@@ -1,6 +1,7 @@
 #include <NTL/ZZ.h>
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 #define NUM_BITS_REAL_MANTISSA 128
 #define IGNORE_DECODING_COST 0
@@ -11,6 +12,7 @@
 #include "binomials.hpp"
 #include "bit_error_probabilities.hpp"
 #include "isd_cost_estimate.hpp"
+#include "logging.hpp"
 #include "partitions_permanents.hpp"
 #include "proper_primes.hpp"
 #include <cmath>
@@ -49,7 +51,8 @@ uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
 }
 
 int ComputeDvMPartition(const uint64_t d_v_prime, const uint64_t n_0,
-                        uint64_t mpartition[], uint64_t &d_v) {
+                        std::vector<uint64_t> &mpartition,
+                        uint64_t &d_v) {
   d_v = floor(sqrt(d_v_prime));
   d_v = (d_v & 0x01) ? d_v : d_v + 1;
   uint64_t m = ceil((double)d_v_prime / (double)d_v);
@@ -65,9 +68,10 @@ int ComputeDvMPartition(const uint64_t d_v_prime, const uint64_t n_0,
   return partition_ok;
 }
 
-uint64_t estimate_dv(const uint32_t c_sec_level, // expressed as
-                     const uint32_t q_sec_level, const uint32_t n_0,
-                     const uint32_t p, uint64_t mpartition[]) {
+uint64_t
+estimate_dv(const uint32_t c_sec_level, // expressed as
+            const uint32_t q_sec_level, const uint32_t n_0, const uint32_t p,
+            std::vector<uint64_t> &mpartition) {
   double achieved_c_sec_level = 0.0;
   double achieved_q_sec_level = 0.0;
   double achieved_c_enum_sec_level = 0.0;
@@ -150,7 +154,7 @@ int main(int argc, char *argv[]) {
             << " epsilon " << epsilon << std::endl;
 
   uint64_t p, p_th, t, d_v_prime, d_v;
-  uint64_t mpartition[n_0] = {0};
+  std::vector<uint64_t> mpartition(n_0, 0);
 
   int current_prime_pos = 0;
   while (proper_primes[current_prime_pos] < starting_prime_lower_bound) {
@@ -201,7 +205,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "refining parameters" << std::endl;
 
-  uint64_t p_ok, t_ok, d_v_ok, mpartition_ok[n_0] = {0};
+  std::optional<uint32_t> p_ok;
+  uint64_t t_ok, d_v_ok;
+  std::vector<uint64_t> mpartition_ok(n_0, 0);
   /* refinement step taking into account possible invalid m partitions */
 
   do {
@@ -240,11 +246,20 @@ int main(int argc, char *argv[]) {
     current_prime_pos--;
   } while ((p > (1.0 + epsilon) * p_th) && (current_prime_pos > 0));
 
-  std::cout << "parameter set found: p:" << p_ok << " t: " << t_ok;
-  std::cout << " d_v : " << d_v_ok << " mpartition: [ ";
-  for (unsigned i = 0; i < n_0; i++) {
-    std::cout << mpartition_ok[i] << " ";
+  if (!p_ok || !d_v_ok) {
+    spdlog::error("Error: One or more variables are not initialized.");
+    throw std::runtime_error("One or more variables are not initialized.");
+  } else {
+    spdlog::info("parameter set found: p={}, t={}, d_v={}, mpartition={}",
+                 optional_to_string(p_ok), t_ok, optional_to_string(d_v_ok),
+                 array_to_string(mpartition_ok));
   }
-  std::cout << " ]" << std::endl;
-  return 0;
-}
+    //         std::cout
+    //     << " p:" << p_ok << " t: " << t_ok;
+    // std::cout << " d_v : " << d_v_ok << " mpartition: [ ";
+    // for (unsigned i = 0; i < n_0; i++) {
+    //   std::cout << mpartition_ok[i] << " ";
+    // }
+    // std::cout << " ]" << std::endl;
+    return 0;
+  }
