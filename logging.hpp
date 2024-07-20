@@ -5,9 +5,10 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-void configure_logger() {
+void configure_logger(const std::optional<std::string> filename) {
   // Initialize the logger
-  auto logger = spdlog::basic_logger_mt("default_logger", "logs/default.log");
+  const std::string ff = filename.has_value() ? filename.value(): "logs/default.log";
+  auto logger = spdlog::basic_logger_mt("default_logger", ff);
   spdlog::set_default_logger(logger);
 
   // Retrieve the environment variable for log level

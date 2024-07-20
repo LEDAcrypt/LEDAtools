@@ -19,7 +19,7 @@
 
 int main() {
   // Configure the logger
-  configure_logger();
+  configure_logger(std::nullopt);
 
   std::ifstream file("out/isd_values.json");
 
@@ -49,9 +49,6 @@ int main() {
     // int n0 = entry["n0"];
     // int v = entry["v"];
     // int lambd = entry["lambd"];
-
-    // Output the data
-    // std::cout << "n: " << n << ", r: " << r << ", t: " << t << std::endl;
 
     for (bool is_kra : is_kra_values) {
       spdlog::info("Processing n {}, k {}, t {}, qc_block_size {}, is_kra {}, "
