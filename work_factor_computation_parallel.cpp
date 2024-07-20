@@ -35,12 +35,12 @@ int main() {
 
   configure_logger(std::nullopt);
 
-  // TODO take from input?
-  std::ifstream file("out/isd_values.json");
+  const std::string input_isd_values = "out/isd_values.json";
+  std::ifstream file(input_isd_values);
 
   // Check if the file is open 
   if (!file.is_open()) {
-    std::cerr << "Could not open the file!" << std::endl;
+    std::cerr << "Could not open the input file " << input_isd_values  << std::endl;
     return 1;
   }
 
@@ -79,7 +79,7 @@ int main() {
     // int lambd = entry["lambd"];
 
     std::string filename =
-        OUT_DIR_RESULTS + fmt::format("/{:06}_{:06}_{:03}.json", n, r, t);
+        OUT_DIR_RESULTS + fmt::format("{:06}_{:06}_{:03}.json", n, r, t);
 
     nlohmann::json out_values;
 
