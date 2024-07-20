@@ -9,6 +9,9 @@
 !LICENSE
 !Makefile
 
+# Log output
+logs/
+
 # Cache
 .ccls-cache
 # out
