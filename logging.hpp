@@ -1,9 +1,9 @@
 #pragma once
-#include <fmt/core.h>
 #include <optional>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <vector>
 
 void configure_logger(const std::optional<std::string> filename) {
   // Initialize the logger

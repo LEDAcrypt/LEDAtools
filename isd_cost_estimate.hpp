@@ -5,6 +5,8 @@
 #include <NTL/ZZ.h>
 #include <cmath>
 #include <optional>
+#include <string>
+#include <map>
 
 #define SKIP_PRANGE 1
 #define SKIP_LB 1

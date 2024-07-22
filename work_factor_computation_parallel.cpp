@@ -1,11 +1,10 @@
 #include <NTL/ZZ.h>
 #include <cstdint>
-#include <fstream>
 #include <iomanip> // For std::setprecision
 #include <iostream>
+#include <fstream>
 #include <nlohmann/json.hpp>
 #include <omp.h>
-#include <sstream>
 #include <string>
 
 #include "binomials.hpp"
@@ -13,7 +12,7 @@
 #include "logging.hpp"
 #include "globals.hpp"
 #include <iostream>
-#include <format> // Requires C++20
+#include <ctime>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
