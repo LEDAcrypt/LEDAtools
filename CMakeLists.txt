@@ -18,40 +18,18 @@ set(TARGETS
     work_factor_computation
 )
 # Define libraries
-set(LIBS ntl gmp m )
+set(LIBS ntl gmp m spdlog fmt)
 
 # Include directories (if any)
 # include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Libraries
-find_package(OpenMP)
 find_library(gmp gmp)
 find_library(ntl ntl)
 find_library(m m)
-
-find_package(spdlog QUIET)
-# If spdlog is not found, add the local include directory
-if (NOT spdlog_FOUND)
-    message(WARNING "spdlog not found, using local include directory at $ENV{HOME}/vc/spdlog/include")
-    include_directories($ENV{HOME}/vc/spdlog/include)
-    link_directories($ENV{HOME}/vc/spdlog/build)
-    list(APPEND LIBS libspdlog.a)
-else()
-    list(APPEND LIBS spdlog)
-    set(LIBNAMES "spdlog")
-endif()
-
-find_package(fmt QUIET)
-if (NOT fmt_FOUND)
-    message(WARNING "fmt not found, using local include directory at $ENV{HOME}/vc/fmt/include")
-    include_directories($ENV{HOME}/vc/fmt/include)
-    link_directories($ENV{HOME}/vc/fmt/build)
-    list(APPEND LIBS libfmt.a)
-else()
-    message(STATUS "fmt found: ${fmt_DIR}")
-    list(APPEND LIBS fmt)
-endif()
-
+find_package(OpenMP REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(fmt REQUIRED)
 
 # Print include directories to verify
 get_directory_property(dirs INCLUDE_DIRECTORIES)
