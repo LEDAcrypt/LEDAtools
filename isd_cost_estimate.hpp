@@ -39,11 +39,10 @@ Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
 const NTL::RR log_probability_k_by_k_is_inv(const NTL::RR &k) {
   if (k >= 100)
     return NTL::RR(-1.79191682);
-  NTL::RR log_2 = NTL::RR(0.69314718);
   NTL::RR log_pinv = NTL::RR(-1);
   for (long i = 2; i <= k; i++) {
     log_pinv =
-      log_pinv + NTL::log(NTL::RR(1) - NTL::power2_RR(-i)) / log_2;
+      log_pinv + log2_RR(NTL::RR(1) - NTL::power2_RR(-i));
   }
   return log_pinv;
 }
