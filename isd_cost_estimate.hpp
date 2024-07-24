@@ -37,14 +37,19 @@ Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
 
 // computes the probability of a random k * k being invertible
 const NTL::RR log_probability_k_by_k_is_inv(const NTL::RR &k) {
+  if (k >= 100)
+    return NTL::RR(-1.79191682);
   NTL::RR log_pinv = NTL::RR(-1);
   for (long i = 2; i <= k; i++) {
-    log_pinv = log_pinv + NTL::log(NTL::RR(1) - NTL::power2_RR(-i))/NTL::log(2);
+    log_pinv =
+        log_pinv + NTL::log(NTL::RR(1) - NTL::power2_RR(-i)) / NTL::log(2);
   }
   return log_pinv;
 }
 
 const NTL::RR probability_k_by_k_is_inv(const NTL::RR &k) {
+  if (k >= 100)
+    return NTL::RR(0.288788095);
   NTL::RR log_pinv = NTL::RR(0.5);
   for (long i = 2; i <= k; i++) {
     log_pinv = log_pinv * (NTL::RR(1) - NTL::power2_RR(-i));
