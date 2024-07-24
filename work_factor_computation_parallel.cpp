@@ -20,13 +20,14 @@
 
 void to_json(nlohmann::json &j, const Result &r) {
   j = nlohmann::json{
-      {"alg_name", r.alg_name}, {"params", r.params}, {"value", r.value}};
+    {"alg_name", r.alg_name}, {"params", r.params}, {"value", r.value}, {"gje_cost", r.gje_cost}};
 }
 
 void from_json(const nlohmann::json &j, Result &r) {
   j.at("alg_name").get_to(r.alg_name);
   j.at("params").get_to(r.params);
   j.at("value").get_to(r.value);
+  j.at("gje_cost").get_to(r.gje_cost);
 }
 
 int main() {

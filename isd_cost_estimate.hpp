@@ -17,11 +17,13 @@
 #define SKIP_MMT 1
 #define SKIP_Q_LB 0
 #define SKIP_Q_STERN 1
+  
 
 struct Result {
   std::string alg_name;
   std::map<std::string, int> params;
   double value;
+  double gje_cost;
 };
 
 /***************************Classic ISDs***************************************/
@@ -65,9 +67,10 @@ const NTL::RR classic_rref_red_cost(const NTL::RR &n, const NTL::RR &r) {
          r * r * r / NTL::RR(6) + r * r + r / NTL::RR(6) - NTL::RR(1);
 }
 
-const NTL::RR classic_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r) {
-  return classic_rref_red_cost(n, r) / probability_k_by_k_is_inv(r) + r * r;
-}
+// const NTL::RR classic_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r) {
+// NB: r* r should be added only for SDP, and even there it can be omitted since the syndrome can be thought as another column of H
+//   return classic_rref_red_cost(n, r) / probability_k_by_k_is_inv(r) + r * r;
+// }
 
 const NTL::RR Fin_Send_rref_red_cost(const NTL::RR &n, const NTL::RR &r,
                                      const NTL::RR l) {
@@ -81,11 +84,11 @@ const NTL::RR Fin_Send_rref_red_cost(const NTL::RR &n, const NTL::RR &r,
          r * r + r / NTL::RR(6) - NTL::RR(1);
 }
 
-const NTL::RR Fin_Send_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r,
-                                         const NTL::RR &l) {
-  return Fin_Send_rref_red_cost(n, r, l) / probability_k_by_k_is_inv(r - l) +
-         r * r;
-}
+// const NTL::RR Fin_Send_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r,
+//                                          const NTL::RR &l) {
+//   return Fin_Send_rref_red_cost(n, r, l) / probability_k_by_k_is_inv(r - l) +
+//          r * r;
+// }
 
 Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
                                    const uint32_t t) {
@@ -93,16 +96,18 @@ Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
   NTL::RR k_real = NTL::RR(k);
   NTL::RR t_real = NTL::RR(t);
 
-  NTL::RR cost_iter = classic_IS_candidate_cost(n_real, n_real - k_real);
+  // NTL::RR cost_iter = classic_IS_candidate_cost(n_real, n_real - k_real);
+  NTL::RR cost_gje = classic_rref_red_cost(n_real, k_real);
   NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
                      NTL::to_RR(binomial_wrapper(n - k, t));
 
-  NTL::RR log_cost = log2_RR(num_iter) + log2_RR(cost_iter);
+  NTL::RR log_cost = log2_RR(num_iter) - log_probability_k_by_k_is_inv(n_real - k_real) + log2_RR(cost_gje);
 
   Result res;
   res.alg_name = "Prange";
   res.params = {};
   res.value = NTL::conv<double>(log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
   return res;
 }
 
@@ -116,12 +121,14 @@ Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
   NTL::RR log_cost;
   uint32_t best_p = 1;
   uint32_t constrained_max_p = P_MAX_LB > t ? t : P_MAX_LB;
-  NTL::RR IS_candidate_cost;
-  IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+
+  NTL::RR cost_gje = classic_rref_red_cost(n_real, k_real);
+  // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+
   for (uint32_t p = 1; p < constrained_max_p; p++) {
     NTL::RR p_real = NTL::RR(p);
-    NTL::RR cost_iter =
-        IS_candidate_cost + NTL::to_RR(binomial_wrapper(k, p) * p * (n - k));
+    NTL::RR cost_iter = cost_gje / probability_k_by_k_is_inv(n_real - k_real) +
+                        NTL::to_RR(binomial_wrapper(k, p) * p * (n - k));
     NTL::RR num_iter =
         NTL::to_RR(binomial_wrapper(n, t)) /
         NTL::to_RR(binomial_wrapper(k, p) * binomial_wrapper(n - k, t - p));
@@ -137,6 +144,7 @@ Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
   return res;
 }
 
@@ -151,8 +159,8 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
   NTL::RR log_cost;
   uint32_t best_l = 0, best_p = 1, constrained_max_l, constrained_max_p;
 
-  NTL::RR IS_candidate_cost;
-  IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+  NTL::RR gje_cost = classic_rref_red_cost(n_real, n_real - k_real);
+  // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
   constrained_max_p = P_MAX_Leon > t ? t : P_MAX_Leon;
   for (uint32_t p = 1; p < constrained_max_p; p++) {
     constrained_max_l =
@@ -161,7 +169,7 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
     for (uint32_t l = 0; l < constrained_max_l; l++) {
       NTL::RR KChooseP = NTL::to_RR(binomial_wrapper(k, p));
       NTL::RR cost_iter =
-          IS_candidate_cost + KChooseP * p_real * NTL::to_RR(l) +
+          gje_cost / probability_k_by_k_is_inv(n_real - k_real) + KChooseP * p_real * NTL::to_RR(l) +
           (KChooseP / NTL::power2_RR(l)) * NTL::RR(p * (n - k - l));
       NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
                          NTL::to_RR(binomial_wrapper(k, p) *
@@ -180,6 +188,7 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(gje_cost));
   return res;
 }
 
@@ -194,8 +203,8 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   NTL::RR log_cost;
   uint32_t best_l = 0, best_p = 2, constrained_max_l, constrained_max_p;
 
-  NTL::RR IS_candidate_cost;
-  IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+  NTL::RR gje_cost = classic_rref_red_cost(n_real, n_real - k_real);
+  // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
 
   constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
@@ -208,7 +217,7 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
       NTL::RR kHalfChoosePHalf_real = NTL::to_RR(kHalfChoosePHalf);
 
       NTL::RR cost_iter =
-          IS_candidate_cost +
+          gje_cost/ probability_k_by_k_is_inv(n_real - k_real) +
           kHalfChoosePHalf_real * (NTL::to_RR(l) * p_real +
                                    (kHalfChoosePHalf_real / NTL::power2_RR(l)) *
                                        NTL::RR(p * (n - k - l)));
@@ -239,6 +248,7 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   res.alg_name = "Stern";
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(gje_cost));
   return res;
 }
 
@@ -253,7 +263,8 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
   NTL::RR log_cost;
   uint32_t best_l = 0, best_p = 2, constrained_max_l, constrained_max_p;
 
-  NTL::RR IS_candidate_cost;
+  NTL::RR cost_gje;
+//   return Fin_Send_rref_red_cost(n, r, l) / probability_k_by_k_is_inv(r - l) +
   constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
     constrained_max_l =
@@ -261,18 +272,18 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
     NTL::RR p_real = NTL::RR(p);
     NTL::ZZ kPlusLHalfChoosePHalf;
     for (uint32_t l = 0; l < constrained_max_l; l++) {
-      IS_candidate_cost =
-          Fin_Send_IS_candidate_cost(n_real, n_real - k_real, NTL::RR(l));
+      NTL::RR l_real = NTL::RR(l);
+      cost_gje =
+          Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
       kPlusLHalfChoosePHalf = binomial_wrapper((k + l) / 2, p / 2);
       NTL::RR kPlusLHalfChoosePHalf_real = NTL::to_RR(kPlusLHalfChoosePHalf);
       NTL::RR cost_iter =
-          IS_candidate_cost +
+        cost_gje / probability_k_by_k_is_inv(n_real - k_real - l_real) +
           kPlusLHalfChoosePHalf_real *
               (NTL::to_RR(l) * p_real +
                (kPlusLHalfChoosePHalf_real / NTL::power2_RR(l)) *
                    NTL::RR(p * (n - k - l)));
       // #if LOG_COST_CRITERION == 1
-      NTL::RR l_real = NTL::to_RR(l);
       NTL::RR log_FS_list_size =
           kPlusLHalfChoosePHalf_real *
           (p_real / NTL::RR(2) * NTL::log((k_real + l_real) / NTL::RR(2)) /
@@ -299,6 +310,8 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
   res.alg_name = "Fin-Send";
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
+  //cost_gje not reported
   return res;
 }
 
@@ -320,7 +333,7 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
   uint32_t best_l1;
 #endif
 
-  NTL::RR FS_IS_candidate_cost;
+  NTL::RR cost_gje;
   constrained_max_p = P_MAX_MMT > t ? t : P_MAX_MMT;
   /* p should be divisible by 4 in MMT */
   for (uint32_t p = 4; p <= constrained_max_p; p = p + 4) {
@@ -333,7 +346,8 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
           NTL::to_RR(binomial_wrapper(n, t)) /
           NTL::to_RR(kPlusLHalfChoosePHalf * kPlusLHalfChoosePHalf *
                      binomial_wrapper(n - k - l, t - p));
-      FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real, r_real, l_real);
+      // FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real, r_real, l_real);
+      cost_gje = Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
       NTL::ZZ kPlusLHalfChoosePFourths = binomial_wrapper((k + l) / 2, p / 4);
       NTL::RR kPlusLHalfChoosePFourths_real =
           NTL::to_RR(kPlusLHalfChoosePFourths);
@@ -365,7 +379,7 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
 
         NTL::RR otherFactor = (NTL::to_RR(p / 4 * l_2) + interm);
         NTL::RR cost_iter =
-            FS_IS_candidate_cost + min * otherFactor +
+            cost_gje/probability_k_by_k_is_inv(n_real - k_real - l_real) + min * otherFactor +
             kPlusLHalfChoosePFourths_real * NTL::to_RR(p / 2 * l_2);
 
         NTL::RR lastAddend =
@@ -412,6 +426,7 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
   res.alg_name = "MMT";
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
   return res;
 }
 
@@ -432,7 +447,7 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
   std::optional<uint32_t> best_p, best_l, best_eps_1, best_eps_2;
   uint32_t constrained_max_l, constrained_max_p;
 
-  NTL::RR FS_IS_candidate_cost;
+  NTL::RR cost_gje;
   constrained_max_p = P_MAX_BJMM > t ? t : P_MAX_BJMM;
   /*p should be divisible by 2 in BJMM */
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
@@ -450,8 +465,10 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
 
           /* Available parameters p, p_1,p_2,p_3, l */
           NTL::RR l_real = NTL::RR(l);
-          FS_IS_candidate_cost =
-              Fin_Send_IS_candidate_cost(n_real, n_real - k_real, l_real);
+          cost_gje = Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
+          // TODO check why this cost (or the rref cost) is never used
+          // FS_IS_candidate_cost =
+          //     Fin_Send_IS_candidate_cost(n_real, n_real - k_real, l_real);
           uint32_t p_3 = p_2 / 2;
 
           NTL::ZZ L3_list_len = binomial_wrapper((k + l) / 2, p_3);
@@ -555,6 +572,7 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
                 {"eps1", best_eps_1.value()},
                 {"eps2", best_eps_2.value()}};
   res.value = NTL::conv<double>(min_log_cost);
+  res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
   return res;
 }
 
@@ -795,7 +813,7 @@ Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 #endif
 
 #if SKIP_Q_STERN == 0
-  current_res = isd_log_cost_classic_stern(n, k, t);
+  current_res = isd_log_cost_classic_Stern(n, k, t);
   current_res.value -= qc_red_factor;
   if (current_res.value < min_cost) {
     min_res = current_res;
