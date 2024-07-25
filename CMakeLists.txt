@@ -13,11 +13,6 @@ add_compile_options(-O3 -g3 -Wall -Wextra -Wno-sign-compare)
 # Include directories
 include_directories(include)
 
-# Add the src directory
 add_subdirectory(src)
-
-# # Add the example directory
-# add_subdirectory(examples)
-
-# # Add the test directory
+add_subdirectory(examples)
 # add_subdirectory(test)
