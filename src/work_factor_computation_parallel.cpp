@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <iomanip> // For std::setprecision
 #include <iostream>
-#include <fstream>
 #include <nlohmann/json.hpp>
 #include <omp.h>
 #include <string>
@@ -13,6 +12,7 @@
 #include "globals.hpp"
 #include <iostream>
 #include <ctime>
+#include <fstream>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0

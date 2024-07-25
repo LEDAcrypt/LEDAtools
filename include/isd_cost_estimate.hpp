@@ -4,9 +4,9 @@
 #include <NTL/RR.h>
 #include <NTL/ZZ.h>
 #include <cmath>
+#include <map>
 #include <optional>
 #include <string>
-#include <map>
 
 #define SKIP_PRANGE 1
 #define SKIP_LB 1
@@ -17,7 +17,6 @@
 #define SKIP_MMT 1
 #define SKIP_Q_LB 0
 #define SKIP_Q_STERN 1
-  
 
 struct Result {
   std::string alg_name;
