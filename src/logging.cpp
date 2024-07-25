@@ -32,7 +32,7 @@ void configure_logger(const std::optional<std::string> filename) {
       spdlog::set_level(spdlog::level::info); // Default level
     }
   } else {
-    spdlog::set_level(spdlog::level::info); // Default level if environment
+    spdlog::set_level(spdlog::level::err); // Default level if environment
                                             // variable is not set
   }
 }
