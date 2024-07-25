@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
 
   /* reduce by a factor matching the QC block size */
 
+  InitConstants();
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();

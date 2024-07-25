@@ -16,5 +16,8 @@ include_directories(include)
 # Add the src directory
 add_subdirectory(src)
 
+# # Add the example directory
+# add_subdirectory(examples)
+
 # # Add the test directory
 # add_subdirectory(test)

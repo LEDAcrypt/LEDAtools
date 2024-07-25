@@ -48,6 +48,7 @@ int main() {
   nlohmann::json j;
   file >> j;
 
+  InitConstants();
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();

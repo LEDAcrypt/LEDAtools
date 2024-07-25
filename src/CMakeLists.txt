@@ -1,10 +1,10 @@
 # Define the executable targets
 set(TARGETS 
     constant_weight_encodable_bits
-    enumeration_complexity
-    parameter_generator
-    work_factor_computation
-    work_factor_computation_parallel
+    # enumeration_complexity
+    # parameter_generator
+    # work_factor_computation
+    # work_factor_computation_parallel
 )
 
 # Libraries
@@ -26,12 +26,22 @@ message(STATUS "fmt library: ${fmt_LIBRARIES}")
 # Define libraries
 set(LIBS ${NTL_LIB} ${GMP_LIB} ${M_LIB} spdlog::spdlog fmt::fmt)
 
-foreach(target ${TARGETS})
-    add_executable(${target} ${target}.cpp)
-    target_link_libraries(${target} PRIVATE ${LIBS})
-endforeach()
+set(target constant_weight_encodable_bits)
+add_executable(${target} ${target}.cpp binomials.cpp)
+target_link_libraries(${target} PRIVATE ${LIBS})
 
-# Special case for work_factor_computation_parallel with OpenMP
-target_link_libraries(work_factor_computation_parallel PRIVATE OpenMP::OpenMP_CXX)
+set(target enumeration_complexity)
+add_executable(${target} ${target}.cpp binomials.cpp)
+target_link_libraries(${target} PRIVATE ${LIBS})
 
-# message(STATUS "m library: ${M_LIBRARIES}")
+set(target parameter_generator)
+add_executable(${target} ${target}.cpp binomials.cpp logging.cpp bit_error_probabilities.cpp isd_cost_estimate.cpp)
+target_link_libraries(${target} PRIVATE ${LIBS})
+
+set(target work_factor_computation)
+add_executable(${target} ${target}.cpp binomials.cpp logging.cpp isd_cost_estimate.cpp)
+target_link_libraries(${target} PRIVATE ${LIBS})
+
+set(target work_factor_computation_parallel)
+add_executable(${target} ${target}.cpp binomials.cpp logging.cpp isd_cost_estimate.cpp)
+target_link_libraries(${target} PRIVATE ${LIBS} OpenMP::OpenMP_CXX)
