@@ -1,6 +1,6 @@
 # MINE
-# bin dir
-bin/
+# build dir
+build/
 
 # Log output
 logs/
