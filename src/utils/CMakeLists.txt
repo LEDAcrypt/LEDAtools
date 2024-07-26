@@ -15,3 +15,6 @@ message(STATUS "fmt library: ${fmt_LIBRARIES}")
 
 # Specify include directories for this module
 target_include_directories(ledautils PUBLIC ${PROJECT_SOURCE_DIR}/include/utils)
+
+# Install the library
+install(TARGETS ledautils DESTINATION lib)
