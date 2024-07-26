@@ -1,4 +1,3 @@
-
 find_package(OpenMP REQUIRED)
 message(STATUS "OpenMP library: ${OpenMP_CXX_LIBRARIES}")
 find_library(GMP_LIB gmp)
