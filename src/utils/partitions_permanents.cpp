@@ -1,6 +1,6 @@
 #include <cstdint>
-#include <iostream>
-#include <vector>
+
+#include "partitions_permanents.hpp"
 
 /*
  Permanent formulas for circulant matrices as obtained via Sage (macsyma)

@@ -1,4 +1,5 @@
-add_library(ledautils binomials.cpp logging.cpp bit_error_probabilities.cpp isd_cost_estimate.cpp)
+# add_library(ledautils binomials.cpp logging.cpp bit_error_probabilities.cpp isd_cost_estimate.cpp)
+add_library(ledautils binomials.cpp logging.cpp bit_error_probabilities.cpp isd_cost_estimate.cpp partitions_permanents.cpp)
 
 find_library(GMP_LIB gmp)
 find_library(NTL_LIB ntl)

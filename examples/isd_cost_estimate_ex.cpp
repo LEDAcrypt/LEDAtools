@@ -1,4 +1,4 @@
-#include "isd_cost_estimate.hpp"
+#include <isd_cost_estimate.hpp>
 #include <cstdint> // for uint32_t
 #include <vector>
 #include <string>
@@ -14,23 +14,35 @@ struct Cost {
 };
 
 struct Value {
-  uint32_t n0;
-  uint32_t prime;
-  uint32_t v;
-  uint32_t t;
+  uint32_t codeword_size;
+  uint32_t code_dimension;
+  uint32_t number_of_errors;
+  uint32_t qc_block_size;
+  bool is_kra;
   std::vector<Cost> costs;
 };
 
-void displayValues(const std::vector<Value> &values) {
-  // Optional: Display the values
-  for (const auto &value : values) {
-    std::cout << "n0: " << value.n0 << ", prime: " << value.prime << "\n";
-    for (const auto &cost : value.costs) {
-      std::cout << "  Algorithm: " << cost.algorithm << ", Type: " << cost.type
-                << ", Quantum: " << (cost.is_quantum ? "Yes" : "No")
-                << ", Time Complexity: " << cost.time_complexity
-                << ", Space Complexity: " << cost.space_complexity << "\n";
-    }
+void displayCost(const Cost &cost) {
+  std::cout << "  Algorithm: " << cost.algorithm << '\n';
+  std::cout << "  Type: " << cost.type << '\n';
+  std::cout << "  Is Quantum: " << (cost.is_quantum ? "Yes" : "No") << '\n';
+  std::cout << "  Time Complexity: " << cost.time_complexity << '\n';
+  std::cout << "  Space Complexity: " << cost.space_complexity << '\n';
+}
+
+// Function to display a Value object
+void displayValue(const Value &value) {
+  std::cout << "Value:\n";
+  std::cout << "  Codeword Size: " << value.codeword_size << '\n';
+  std::cout << "  Code Dimension: " << value.code_dimension << '\n';
+  std::cout << "  Number of Errors: " << value.number_of_errors << '\n';
+  std::cout << "  QC Block Size: " << value.qc_block_size << '\n';
+  std::cout << "  Is KRA: " << (value.is_kra ? "Yes" : "No") << '\n';
+
+  std::cout << "Costs:\n";
+  for (const auto &cost : value.costs) {
+    displayCost(cost);
+    std::cout << "-----\n";
   }
 }
 
@@ -38,49 +50,18 @@ int main() {
   std::cout << "Hello world\n";
   // Expected values taken from LEDA specs, Table 4.1
   std::vector<Value> values;
-  Value val = {2,     
-               23371, 
-               71,    
-               130,   
+  Value val = {24646,
+               12323,
+               142,
+               12323,
+               true,
                {
-                   {
-                       "Prange", 
-                       "CFP1",   
-                       false,    
-                       144.2,    
-                       0.0       
-                   },
-                   {
-                       "Prange",
-                       "CFP1",  
-                       false,   
-                       144.2,   
-                       0.0      
-                   },
-
+                   {"Prange", "", false, 171.3, 0.0},
+                   {"Lee-Brickell", "", false, 158.4, 0.0},
+                   {"Leon", "", false, 154.4, 0.0},
+                   {"Stern", "", false, 147.4, 0.0},
+                   {"Fin-Send", "", false, 147.4, 0.0},
                }};
 
-  // Value value1 = {
-  //         10, // n0
-  //         7,  // prime
-  //         5,  // v
-  //         20, // t
-  //         {{"Algorithm1", "CFP1", true, 0.5, 1.0},
-  //          {"Algorithm2", "SDP", false, 1.0, 2.0}} // costs
-  //     };
-  // values.push_back(value1);
-  // ,
-  //   {
-  //       15, // n0
-  //       11, // prime
-  //       6,  // v
-  //       30, // t
-  //       {{"Algorithm3", "CFP2", true, 0.7, 1.5},
-  //        {"Algorithm4", "CFP3", false, 0.8, 1.8}} // costs
-  //   }};
-
-  // Call the function to display the values
-  // displayValues(values);
-
-  // return 0;
+  displayValue(val);
 }
