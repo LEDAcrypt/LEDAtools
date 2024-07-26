@@ -16,10 +16,11 @@
 #define SKIP_Q_STERN 0
 
 struct Result {
-    std::string alg_name;
-    std::map<std::string, int> params;
-    double value;
-    double gje_cost;
+  std::string alg_name;
+  std::map<std::string, int> params;
+  double value;
+  double gje_cost;
+  double list_size;
 };
 
 /***************************Classic ISDs***************************************/
@@ -34,14 +35,22 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
                       const bool compute_qc_reduction_factor);
 
-Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k, const uint32_t t);
-Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k, const uint32_t t);
+Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
+                                   const uint32_t t);
+Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
+                               const uint32_t t);
+Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
+                                 const uint32_t t);
+Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
+                                  const uint32_t t);
+Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
+                               const uint32_t t);
+Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
+                                const uint32_t t);
+Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
+                                        const uint32_t t);
+Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
+                                 const uint32_t t);
 
 // Quantum
 Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
@@ -51,4 +60,4 @@ Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
                                const uint32_t t);
 Result isd_log_cost_quantum_Stern(const uint32_t n, const uint32_t k,
-                               const uint32_t t);
+                                  const uint32_t t);

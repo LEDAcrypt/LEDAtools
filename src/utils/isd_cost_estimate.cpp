@@ -182,9 +182,10 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   uint32_t best_l = 0, best_p = 2, constrained_max_l, constrained_max_p;
 
   NTL::RR gje_cost = classic_rref_red_cost(n_real, n_real - k_real);
-  // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+  NTL::RR log_stern_list_size;
+      // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
 
-  constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
+      constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
     constrained_max_l =
         (L_MAX_Stern > (n - k - (t - p)) ? (n - k - (t - p)) : L_MAX_Stern);
@@ -200,13 +201,13 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
                                    (kHalfChoosePHalf_real / NTL::power2_RR(l)) *
                                        NTL::RR(p * (n - k - l)));
       // #if LOG_COST_CRITERION == 1
-      NTL::RR log_stern_list_size =
+      log_stern_list_size = 
           kHalfChoosePHalf_real *
           (p_real / NTL::RR(2) * NTL::log(k_real / NTL::RR(2)) /
                NTL::log(NTL::RR(2)) +
            NTL::to_RR(l));
-      log_stern_list_size =
-          NTL::log(log_stern_list_size) / NTL::log(NTL::RR(2));
+      log_stern_list_size = log2_RR(log_stern_list_size);
+          // NTL::log(log_stern_list_size) / NTL::log(NTL::RR(2));
       cost_iter = cost_iter * log_stern_list_size;
       // #endif
       NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
@@ -227,6 +228,7 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
   res.gje_cost = NTL::conv<double>(log2_RR(gje_cost));
+  res.list_size = NTL::conv<double>(log_stern_list_size);
   return res;
 }
 

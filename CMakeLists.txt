@@ -11,8 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_options(-O3 -g3 -Wall -Wextra -Wno-sign-compare)
 
 # Include directories
-include_directories(include)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 add_subdirectory(examples)
 # add_subdirectory(test)
+
+# Installation directories
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
