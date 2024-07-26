@@ -5,14 +5,14 @@
 #include <nlohmann/json.hpp>
 #include <omp.h>
 #include <string>
-
-#include "binomials.hpp"
-#include "isd_cost_estimate.hpp"
-#include "logging.hpp"
-#include "globals.hpp"
-#include <iostream>
+#include <binomials.hpp>
 #include <ctime>
 #include <fstream>
+#include <iostream>
+#include <isd_cost_estimate.hpp>
+#include <logging.hpp>
+
+#include "globals.hpp"
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
@@ -20,7 +20,7 @@
 
 void to_json(nlohmann::json &j, const Result &r) {
   j = nlohmann::json{
-    {"alg_name", r.alg_name}, {"params", r.params}, {"value", r.value}, {"gje_cost", r.gje_cost}};
+    {"alg_name", r.alg_name}, {"params", r.params}, {"value", r.value}, {"gje_cost", r.gje_cost}, {"list_size", r.list_size}};
 }
 
 void from_json(const nlohmann::json &j, Result &r) {
