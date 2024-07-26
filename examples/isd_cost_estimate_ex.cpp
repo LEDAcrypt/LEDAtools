@@ -19,6 +19,7 @@ struct Value {
   uint32_t number_of_errors;
   uint32_t qc_block_size;
   bool is_kra;
+  bool is_red_fac;
   std::vector<Cost> costs;
 };
 
@@ -38,6 +39,7 @@ void displayValue(const Value &value) {
   std::cout << "  Number of Errors: " << value.number_of_errors << '\n';
   std::cout << "  QC Block Size: " << value.qc_block_size << '\n';
   std::cout << "  Is KRA: " << (value.is_kra ? "Yes" : "No") << '\n';
+  std::cout << "  Is Reduction factor applied: " << (value.is_red_fac ? "Yes" : "No") << '\n';
 
   std::cout << "Costs:\n";
   for (const auto &cost : value.costs) {
@@ -55,6 +57,7 @@ int main() {
                142,
                12323,
                true,
+               true,
                {
                    {"Prange", "", false, 171.3, 0.0},
                    {"Lee-Brickell", "", false, 158.4, 0.0},
@@ -64,4 +67,13 @@ int main() {
                }};
 
   displayValue(val);
+  double c_cost =
+      c_isd_log_cost(
+          val.codeword_size, val.code_dimension, val.number_of_errors,
+          val.qc_block_size, val.is_kra, val.is_red_fac,
+          std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon, Stern,
+                                        Finiasz_Sendrier}
+          )
+          .value;
+  std::cout << c_cost << std::endl;
 }

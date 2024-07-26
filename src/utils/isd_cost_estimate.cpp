@@ -3,6 +3,7 @@
 #include "logging.hpp"
 #include <string>
 #include <cmath>
+#include <unordered_set>
 
 /***************************Classic ISDs***************************************/
 
@@ -118,6 +119,7 @@ Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("Lee-Brickell best p: {}", best_p);
+  spdlog::info("Lee-Brickell time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}};
@@ -162,6 +164,7 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("Leon Best l {} best p: {}", best_l, best_p);
+  spdlog::info("Leon time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -223,6 +226,7 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
   }
 
   spdlog::info("Stern Best l {}, best p: {}", best_l, best_p);
+  spdlog::info("Stern time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Stern";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -286,6 +290,7 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
     }
   }
   spdlog::info("FS Best l {}, best p: {}", best_l, best_p);
+  spdlog::info("FS time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Fin-Send";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -402,6 +407,8 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
   if (best_l == constrained_max_l) {
     spdlog::warn("Warning: l {l} on exploration edge!");
   }
+
+  spdlog::info("MMT time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "MMT";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -545,6 +552,7 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
   spdlog::info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
                optional_to_string(best_l), optional_to_string(best_p),
                optional_to_string(best_eps_1), optional_to_string(best_eps_2));
+  spdlog::info("BJMM time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "BJMM";
   res.params = {{"p", best_p.value()},
@@ -600,6 +608,7 @@ Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
     throw std::runtime_error("One or more variables are not initialized.");
   }
 
+  spdlog::info("Quantum LB time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Quantum Lee-Brickell";
   res.params = {{"p", best_p.value()}};
@@ -609,7 +618,7 @@ Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
 
 #define MAX_M (t / 2)
 
-Result isd_log_cost_quantum_stern(const uint32_t n, const uint32_t k,
+Result isd_log_cost_quantum_Stern(const uint32_t n, const uint32_t k,
                                   const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
   NTL::RR k_real = NTL::RR(k);
@@ -687,9 +696,11 @@ Result isd_log_cost_quantum_stern(const uint32_t n, const uint32_t k,
   return res;
 }
 
+
 /***************************Aggregation ***************************************/
 
-double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
+double
+get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
   /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
    * a message recovery (SDP), the DOOM advantage is sqrt(p).
    */
@@ -699,107 +710,77 @@ double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
 
 Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor) {
+                      const bool compute_qc_reduction_factor, std::unordered_set<Algorithm> algs) {
   Result current_res, min_res;
   double qc_red_factor =
       compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
 
   double min_cost = n; // the cost cannot be greater than 2^n
 
-#if SKIP_PRANGE == 0
-  current_res = isd_log_cost_classic_Prange(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
+  for (const auto &algo : algs) {
+    switch (algo) {
+    case Prange:
+      current_res = isd_log_cost_classic_Prange(n,k,t);
+      break;
+    case Lee_Brickell:
+      current_res = isd_log_cost_classic_LB(n,k,t);
+      break;
+    case Leon:
+      current_res = isd_log_cost_classic_Leon(n,k,t);
+      break;
+    case Stern:
+      current_res = isd_log_cost_classic_Stern(n,k,t);
+      break;
+    case Finiasz_Sendrier:
+      current_res = isd_log_cost_classic_FS(n, k, t);
+      break;
+    case MMT:
+      current_res = isd_log_cost_classic_MMT(n, k, t);
+      break;
+    case BJMM:
+      current_res = isd_log_cost_classic_BJMM(n,k,t);
+      break;
+    default:
+      std::cerr << "Unknown algorithm\n";
+      break;
+    }
+    current_res.value -= qc_red_factor;
+    if (current_res.value < min_cost) {
+      min_res = current_res;
+      min_cost = current_res.value;
+    }
   }
-#endif
-
-#if SKIP_LB == 0
-  current_res = isd_log_cost_classic_LB(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
-
-#if SKIP_LEON == 0
-  current_res = isd_log_cost_classic_Leon(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
-
-#if SKIP_STERN == 0
-  current_res = isd_log_cost_classic_Stern(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
-
-#if SKIP_FS == 0
-  current_res = isd_log_cost_classic_FS(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
-
-#if SKIP_MMT == 0
-  current_res = isd_log_cost_classic_MMT(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
-
-#if SKIP_BJMM == 0
-  current_res = isd_log_cost_classic_BJMM(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
 
   return min_res;
 }
 
 Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor) {
+                      const bool compute_qc_reduction_factor,
+                      std::unordered_set<QuantumAlgorithm> algs) {
   Result current_res, min_res;
   double min_cost = n; // cannot be greater than n
   double qc_red_factor =
       compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
 
-  /* This is just a quick hack since experiments says that p = 1 is
-   * the optimal value at least for the NIST code-based finalists
-   */
-#if SKIP_Q_LB == 0
-  current_res = isd_log_cost_quantum_LB(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
+  for (const auto &algo : algs) {
+    switch (algo) {
+    case Q_Lee_Brickell:
+      current_res = isd_log_cost_quantum_LB(n,k,t);
+      break;
+    case Q_Stern:
+      current_res = isd_log_cost_quantum_Stern(n,k,t);
+      break;
+    default:
+      std::cerr << "Unknown quantum algorithm\n";
+      break;
+    }
+    current_res.value -= qc_red_factor;
+    if (current_res.value < min_cost) {
+      min_res = current_res;
+      min_cost = current_res.value;
+    }
   }
-#endif
-
-#if SKIP_Q_STERN == 0
-  current_res = isd_log_cost_classic_Stern(n, k, t);
-  current_res.value -= qc_red_factor;
-  if (current_res.value < min_cost) {
-    min_res = current_res;
-    min_cost = current_res.value;
-  }
-#endif
 
   return min_res;
 }

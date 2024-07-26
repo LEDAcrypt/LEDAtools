@@ -49,11 +49,18 @@ int main(int argc, char *argv[]) {
             << "- <is_red_factor_applied>: " << is_red_factor_applied << std::endl;
 
   std::cout << "Minimum classic cost :"
-            << c_isd_log_cost(n, k, t, qc_block_size, is_kra,
-                              is_red_factor_applied).value
+            << c_isd_log_cost(
+                   n, k, t, qc_block_size, is_kra, is_red_factor_applied,
+                   std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon,
+                                                 Stern, Finiasz_Sendrier, MMT,
+                                                 BJMM})
+                   .value
             << " Minimum quantum cost :"
             << q_isd_log_cost(n, k, t, qc_block_size, is_kra,
-                              is_red_factor_applied).value;
+                              is_red_factor_applied,
+                              std::unordered_set<QuantumAlgorithm>{
+                                  Q_Lee_Brickell, Q_Stern})
+                   .value;
   if (is_red_factor_applied && qc_block_size != 1)
     std::cout << " (including qc_effects) ";
   std::cout << std::endl;

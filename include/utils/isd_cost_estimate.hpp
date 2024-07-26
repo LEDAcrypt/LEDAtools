@@ -4,16 +4,7 @@
 #include <map>
 #include <optional>
 #include <string>
-
-#define SKIP_PRANGE 0
-#define SKIP_LB 0
-#define SKIP_LEON 0
-#define SKIP_STERN 0
-#define SKIP_FS 0
-#define SKIP_BJMM 0
-#define SKIP_MMT 0
-#define SKIP_Q_LB 0
-#define SKIP_Q_STERN 0
+#include <unordered_set>
 
 struct Result {
   std::string alg_name;
@@ -21,6 +12,21 @@ struct Result {
   double value;
   double gje_cost;
   double list_size;
+};
+
+enum Algorithm {
+  Prange,
+  Lee_Brickell,
+  Leon,
+  Stern,
+  Finiasz_Sendrier,
+  MMT,
+  BJMM,
+  // Add more algorithms here
+};
+enum QuantumAlgorithm {
+  Q_Lee_Brickell,
+  Q_Stern, // NOTE no circuit available
 };
 
 /***************************Classic ISDs***************************************/
@@ -33,7 +39,7 @@ const NTL::RR classic_rref_red_cost(const NTL::RR &n, const NTL::RR &r);
 
 Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor);
+                      const bool compute_qc_reduction_factor, std::unordered_set<Algorithm> algs);
 
 Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
                                    const uint32_t t);
@@ -55,7 +61,8 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
 // Quantum
 Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor);
+                      const bool compute_qc_reduction_factor,
+                      std::unordered_set<QuantumAlgorithm> algs);
 
 Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
                                const uint32_t t);

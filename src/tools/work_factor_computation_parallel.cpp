@@ -11,6 +11,7 @@
 #include <iostream>
 #include <isd_cost_estimate.hpp>
 #include <logging.hpp>
+#include <unordered_set>
 
 #include "globals.hpp"
 
@@ -48,9 +49,9 @@ int main() {
   nlohmann::json j;
   file >> j;
 
+  NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   InitConstants();
   InitBinomials();
-  NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();
   bool is_kra_values[] = {true, false};
   std::filesystem::path dirPath(OUT_DIR_RESULTS);
@@ -92,9 +93,11 @@ int main() {
                    "is_red_factor_applied {}",
                    n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       current_c_res =
-          c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied);
+          c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied,
+                         std::unordered_set<Algorithm>{Prange, Lee_Brickell});
       current_q_res =
-          q_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied);
+          q_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied,
+                         std::unordered_set<QuantumAlgorithm>{Q_Lee_Brickell});
       std::string is_kra_name = is_kra ? "KRA": "MRA";
       out_values[is_kra_name]["C"] = current_c_res;
       out_values[is_kra_name]["Q"] = current_q_res;
