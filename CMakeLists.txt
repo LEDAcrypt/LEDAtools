@@ -8,7 +8,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Global compiler flags
-add_compile_options(-O3 -g3 -Wall -Wextra -Wno-sign-compare)
+add_compile_options(-O3 -Wall -Wextra -Wno-sign-compare)
+# add_compile_options(-O0 -g3 -Wall -Wextra -Wno-sign-compare)
 
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
