@@ -1,9 +1,11 @@
-#include <isd_cost_estimate.hpp>
 #include <cstdint> // for uint32_t
-#include <vector>
-#include <string>
-#include <ostream>
+#include <cstdlib>
 #include <iostream>
+#include <isd_cost_estimate.hpp>
+#include <map>
+#include <ostream>
+#include <string>
+#include <vector>
 
 struct Cost {
   std::string algorithm;
@@ -20,7 +22,7 @@ struct Value {
   uint32_t qc_block_size;
   bool is_kra;
   bool is_red_fac;
-  std::vector<Cost> costs;
+  std::map<std::string, Cost> costs;
 };
 
 void displayCost(const Cost &cost) {
@@ -39,41 +41,88 @@ void displayValue(const Value &value) {
   std::cout << "  Number of Errors: " << value.number_of_errors << '\n';
   std::cout << "  QC Block Size: " << value.qc_block_size << '\n';
   std::cout << "  Is KRA: " << (value.is_kra ? "Yes" : "No") << '\n';
-  std::cout << "  Is Reduction factor applied: " << (value.is_red_fac ? "Yes" : "No") << '\n';
+  std::cout << "  Is Reduction factor applied: "
+            << (value.is_red_fac ? "Yes" : "No") << '\n';
 
   std::cout << "Costs:\n";
-  for (const auto &cost : value.costs) {
-    displayCost(cost);
+  for (const auto &costPair : value.costs) {
+    displayCost(costPair.second);
     std::cout << "-----\n";
   }
 }
 
 int main() {
-  std::cout << "Hello world\n";
   // Expected values taken from LEDA specs, Table 4.1
-  std::vector<Value> values;
-  Value val = {24646,
-               12323,
-               142,
-               12323,
-               true,
-               true,
-               {
-                   {"Prange", "", false, 171.3, 0.0},
-                   {"Lee-Brickell", "", false, 158.4, 0.0},
-                   {"Leon", "", false, 154.4, 0.0},
-                   {"Stern", "", false, 147.4, 0.0},
-                   {"Fin-Send", "", false, 147.4, 0.0},
-               }};
 
-  displayValue(val);
-  double c_cost =
-      c_isd_log_cost(
-          val.codeword_size, val.code_dimension, val.number_of_errors,
-          val.qc_block_size, val.is_kra, val.is_red_fac,
-          std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon, Stern,
-                                        Finiasz_Sendrier}
-          )
-          .value;
-  std::cout << c_cost << std::endl;
+  std::vector<Value> values;
+  Cost pra = {"Prange", "", false, 171.3, 0.0};
+  Cost lbr = {"Lee-Brickell", "", false, 158.4, 0.0};
+  Cost leo = {"Leon", "", false, 154.4, 0.0};
+  Cost ste = {"Stern", "", false, 147.4, 0.0};
+  Cost fis = {"Fin-Send", "", false, 147.4, 0.0};
+
+  std::map<std::string, Cost> costs = {{"Prange", pra},
+                                       {"Lee-Brickell", lbr},
+                                       {"Leon", leo},
+                                       {"Stern", ste},
+                                       {"Fin-Send", fis}};
+
+  Value val = {24646, 12323, 142, 12323, true, true, costs};
+
+  // displayValue(val);
+
+  Result current_res, min_res;
+  uint32_t n = val.codeword_size;
+  uint32_t k = val.code_dimension;
+  uint32_t t = val.number_of_errors;
+  double qc_red_fac = get_qc_red_factor_log(val.qc_block_size, true);
+  double diff;
+  std::string name;
+  std::cout << "qc_red_fac " << qc_red_fac << std::endl;
+  for (const auto &algo : std::unordered_set<Algorithm>{
+           Prange, Lee_Brickell, Leon, Stern, Finiasz_Sendrier}) {
+    switch (algo) {
+    case Prange:
+      current_res = isd_log_cost_classic_Prange(n, k, t);
+      name = "Prange";
+      break;
+    case Lee_Brickell:
+      current_res = isd_log_cost_classic_LB(n, k, t);
+      name = "Lee-Brickell";
+      break;
+    case Leon:
+      current_res = isd_log_cost_classic_Leon(n, k, t);
+      name = "Leon";
+      break;
+    case Stern:
+      current_res = isd_log_cost_classic_Stern(n, k, t);
+      name = "Stern";
+      break;
+    case Finiasz_Sendrier:
+      current_res = isd_log_cost_classic_FS(n, k, t);
+      name = "Fin-Send";
+      break;
+    case MMT:
+      current_res = isd_log_cost_classic_MMT(n, k, t);
+      name = "MMT ";
+      break;
+    case BJMM:
+      current_res = isd_log_cost_classic_BJMM(n, k, t);
+      name = "BJMM ";
+      break;
+    default:
+      std::cerr << "Unknown algorithm\n";
+      break;
+    }
+    current_res.value -= qc_red_fac;
+    diff = std::abs(costs[name].time_complexity - current_res.value);
+    std::cout << name << "Obtained: " << current_res.value
+              << " Expected: " << costs[name].time_complexity
+              << " Diff: " << diff << std::endl;
+    if (diff >= 1.0) {
+      std::cerr << "WARNING: huge diff";
+    }
+  }
+
+  return 0;
 }
