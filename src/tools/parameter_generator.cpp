@@ -3,12 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-#define NUM_BITS_REAL_MANTISSA 128
-#define IGNORE_DECODING_COST 0
-// #define SKIP_BJMM 1
-// #define SKIP_MMT 1
-// #define LOG_COST_CRITERION 1
-
 #include "binomials.hpp"
 #include "bit_error_probabilities.hpp"
 #include "isd_cost_estimate.hpp"
@@ -18,6 +12,15 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <string>
+
+#define NUM_BITS_REAL_MANTISSA 128
+#define IGNORE_DECODING_COST 0
+// #define SKIP_BJMM 1
+// #define SKIP_MMT 1
+// #define LOG_COST_CRITERION 1
+// static auto LOGGER =
+//     Logger::LoggerManager::getInstance().get_logger("isd_cost_estimate");
 
 uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
                         const uint32_t n_0, const uint32_t p) {
@@ -113,16 +116,15 @@ uint64_t estimate_dv(const uint32_t c_sec_level, // expressed as
         /* last parameter indicates a KRA, reduce margin by p due to
         quasi cyclicity */
         achieved_c_sec_level =
-          c_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true,
-                   std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon,
-                                                 Stern, Finiasz_Sendrier, MMT,
-                                                 BJMM}
-                         ).value;
+            c_isd_log_cost(
+                n_0 * p, p, n_0 * d_v_prime, p, 1, true,
+                std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon, Stern,
+                                              Finiasz_Sendrier, MMT, BJMM})
+                .value;
         achieved_q_sec_level =
             q_isd_log_cost(
                 n_0 * p, p, n_0 * d_v_prime, p, 1, true,
-                std::unordered_set<QuantumAlgorithm>{Q_Lee_Brickell, Q_Stern}
-                )
+                std::unordered_set<QuantumAlgorithm>{Q_Lee_Brickell, Q_Stern})
                 .value;
       }
     }
@@ -175,7 +177,6 @@ int main(int argc, char *argv[]) {
   }
   p_th = proper_primes[current_prime_pos];
 
-  
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();
@@ -263,9 +264,12 @@ int main(int argc, char *argv[]) {
     spdlog::error("Error: One or more variables are not initialized.");
     throw std::runtime_error("One or more variables are not initialized.");
   } else {
-    spdlog::info("parameter set found: p={}, t={}, d_v={}, mpartition={}",
-                 optional_to_string(p_ok), optional_to_string(t_ok),
-                 optional_to_string(d_v_ok), array_to_string(mpartition_ok));
+    spdlog::info(
+        "parameter set found: p={}, t={}, d_v={}, mpartition={}",
+        Logger::LoggerManager::getInstance().optional_to_string(p_ok),
+        Logger::LoggerManager::getInstance().optional_to_string(t_ok),
+        Logger::LoggerManager::getInstance().optional_to_string(d_v_ok),
+        Logger::LoggerManager::getInstance().array_to_string(mpartition_ok));
   }
   //         std::cout
   //     << " p:" << p_ok << " t: " << t_ok;

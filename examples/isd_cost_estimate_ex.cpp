@@ -4,8 +4,11 @@
 #include <isd_cost_estimate.hpp>
 #include <map>
 #include <ostream>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
+
+// #include "logging.hpp"
 
 struct Cost {
   std::string algorithm;
@@ -52,7 +55,7 @@ void displayValue(const Value &value) {
 }
 
 int main() {
-  // Expected values taken from LEDA specs, Table 4.1
+  std::cout<< "logger setted up" << std::endl;
 
   std::vector<Value> values;
   Cost pra = {"Prange", "", false, 171.3, 0.0};
@@ -116,7 +119,7 @@ int main() {
     }
     current_res.value -= qc_red_fac;
     diff = std::abs(costs[name].time_complexity - current_res.value);
-    std::cout << name << "Obtained: " << current_res.value
+    std::cout << name << ". Obtained: " << current_res.value
               << " Expected: " << costs[name].time_complexity
               << " Diff: " << diff << std::endl;
     if (diff >= 1.0) {

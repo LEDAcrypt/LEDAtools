@@ -1,5 +1,5 @@
 #include "binomials.hpp"
-#include "logging.hpp"
+// #include "logging.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -12,10 +12,13 @@ NTL::RR pi = NTL::ComputePi_RR();
 
 NTL::RR log2_RR(NTL::RR v) { return NTL::log(v) / nat_log_2; }
 
+// static auto LOGGER =
+//     Logger::LoggerManager::getInstance().get_logger("binomials");
+
 /*NOTE: NTL allows to access matrices as 1- based with Matlab notation */
 void InitBinomials() {
-  std::cerr << "Precomputing n-choose-t up to n: " << MAX_N << " t: " << MAX_T
-            << std::endl;
+  // LOGGER
+  //   ->info("Precomputing n-choose-t up to n: {}, t: {}", MAX_N, MAX_T);
   binomial_table.SetDims(MAX_N + 1, MAX_T + 1);
   binomial_table[0][0] = NTL::ZZ(1);
   for (unsigned i = 1; i <= MAX_N; i++) {
@@ -26,9 +29,10 @@ void InitBinomials() {
           binomial_table[i][j - 1] * NTL::ZZ(i - j + 1) / NTL::ZZ(j);
     }
   }
+  binomial_table.SetDims(MAX_N + 1, MAX_T + 1);
 
-  // std::cerr << "Precomputing low n-choose-t up to n: " << LOW_K_MAX_N
-  //           << " t: " << LOW_K_MAX_T << std::endl;
+  // LOGGER->info("Precomputing low n-choose-t up to n: {}, t: {}", LOW_K_MAX_N,
+  //              LOW_K_MAX_T);
   low_k_binomial_table.SetDims(LOW_K_MAX_N + 1, LOW_K_MAX_T + 1);
   low_k_binomial_table[0][0] = NTL::ZZ(1);
   for (unsigned i = 0; i <= LOW_K_MAX_N; i++) {
@@ -40,7 +44,7 @@ void InitBinomials() {
     }
   }
   is_data_initialized = true;
-  // std::cerr << "done" << std::endl;
+  // LOGGER->info("Done");
 }
 
 NTL::RR lnFactorial(NTL::RR n) {
@@ -69,10 +73,10 @@ NTL::ZZ binomial_wrapper(long n, long k) {
     }
     if ((n <= LOW_K_MAX_N) && (k < LOW_K_MAX_T)) {
       return low_k_binomial_table[n][k];
-    } else {
-      spdlog::info(
-          "Binomial table not initizialed, resorting to standard computation");
     }
+  } else {
+    // LOGGER->info(
+    //     "Binomial table not initizialed, resorting to standard computation");
   }
 
   /* shortcut computation for fast cases (k < 10) where

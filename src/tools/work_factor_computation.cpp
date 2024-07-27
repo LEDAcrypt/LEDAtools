@@ -1,5 +1,6 @@
 #include <NTL/ZZ.h>
 #include <cstdint>
+// #include <logging.hpp>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
@@ -27,9 +28,13 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  // Logger::LoggerManager::getInstance().setup_logger(
+  //     "binomials", spdlog::level::err, spdlog::level::err);
+  // Logger::LoggerManager::getInstance().setup_logger(
+  //     "isd_cost_estimate", spdlog::level::err, spdlog::level::err);
+
   /* reduce by a factor matching the QC block size */
 
-  
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();
@@ -46,14 +51,17 @@ int main(int argc, char *argv[]) {
             << "- <number of errors>: " << t << std::endl
             << "- <qc block size>: " << qc_block_size << std::endl
             << "- <is_kra>: " << is_kra << std::endl
-            << "- <is_red_factor_applied>: " << is_red_factor_applied << std::endl;
+            << "- <is_red_factor_applied>: " << is_red_factor_applied
+            << std::endl;
 
   std::cout << "Minimum classic cost :"
             << c_isd_log_cost(
                    n, k, t, qc_block_size, is_kra, is_red_factor_applied,
-                   std::unordered_set<Algorithm>{Prange, Lee_Brickell, Leon,
-                                                 Stern, Finiasz_Sendrier, MMT,
-                                                 BJMM})
+                   std::unordered_set<Algorithm>{
+                       Prange, Lee_Brickell, Leon, Stern,
+                       // Finiasz_Sendrier, //
+                       // MMT, BJMM //
+                   })
                    .value
             << " Minimum quantum cost :"
             << q_isd_log_cost(n, k, t, qc_block_size, is_kra,

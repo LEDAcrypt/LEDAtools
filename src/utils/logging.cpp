@@ -1,46 +1,57 @@
 #include "logging.hpp"
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
+#include <vector>
+#include <iostream>
 
-void configure_logger(const std::optional<std::string> filename) {
-  // Initialize the logger
-  const std::string ff =
-      filename.has_value() ? filename.value() : "logs/default.log";
-  auto logger = spdlog::basic_logger_mt("default_logger", ff);
-  spdlog::set_default_logger(logger);
-
-  // Retrieve the environment variable for log level
-  const char *log_level_env = std::getenv("LOG_LEVEL");
-
-  if (log_level_env) {
-    std::string log_level_str(log_level_env);
-
-    // Configure the log level based on the environment variable
-    if (log_level_str == "trace") {
-      spdlog::set_level(spdlog::level::trace);
-    } else if (log_level_str == "debug") {
-      spdlog::set_level(spdlog::level::debug);
-    } else if (log_level_str == "info") {
-      spdlog::set_level(spdlog::level::info);
-    } else if (log_level_str == "warn") {
-      spdlog::set_level(spdlog::level::warn);
-    } else if (log_level_str == "err") {
-      spdlog::set_level(spdlog::level::err);
-    } else if (log_level_str == "critical") {
-      spdlog::set_level(spdlog::level::critical);
-    } else {
-      spdlog::set_level(spdlog::level::info); // Default level
-    }
-  } else {
-    spdlog::set_level(spdlog::level::err); // Default level if environment
-                                            // variable is not set
-  }
+Logger::LoggerManager &Logger::LoggerManager::getInstance() {
+  static LoggerManager instance;
+  return instance;
 }
 
-std::string optional_to_string(const std::optional<uint32_t> &opt) {
-  if (opt) {
-    return std::to_string(*opt);
+void Logger::LoggerManager::setup_logger(
+    const std::string &logger_name, spdlog::level::level_enum console_level,
+    spdlog::level::level_enum file_level, const std::string &pattern) {
+  // Creating sinks, console
+  auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  console_sink->set_level(console_level);
+  console_sink->set_pattern(pattern);
+
+  // ... and file
+  // TODO change hard-coded dir
+  auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+      "logs/" + logger_name + ".log", true);
+  file_sink->set_level(file_level);
+  file_sink->set_pattern(pattern);
+
+  std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
+
+  std::shared_ptr<spdlog::logger> logger;
+  auto it = loggers.find(logger_name);
+  if (it != loggers.end()) {
+    std::cout << "Logger already present " << logger_name << std::endl;
+    logger = it->second;
   } else {
-    return "Not Initialized";
+    std::cout << "Creating logger " << logger_name << std::endl;
+    logger = std::make_shared<spdlog::logger>(logger_name, sinks.begin(),
+                                              sinks.end());
+    loggers[logger_name] = logger;
+    spdlog::register_logger(logger);
   }
+  // logger->set_level(spdlog::level::trace); // Set to the most verbose level
+  // logger->flush_on(spdlog::level::err);
+}
+
+std::shared_ptr<spdlog::logger>
+Logger::LoggerManager::get_logger(const std::string &logger_name) {
+  auto it = loggers.find(logger_name);
+  if (it != loggers.end()) {
+    return it->second;
+  }
+  // Logger not found, so set it up
+  setup_logger(logger_name, spdlog::level::info,
+               spdlog::level::info); // Default levels
+
+  return loggers[logger_name];
 }

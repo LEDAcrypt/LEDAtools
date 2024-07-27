@@ -10,8 +10,9 @@
 #include <fstream>
 #include <iostream>
 #include <isd_cost_estimate.hpp>
-#include <logging.hpp>
+// #include <logging.hpp>
 #include <unordered_set>
+#include <fmt/core.h>
 
 #include "globals.hpp"
 
@@ -32,9 +33,11 @@ void from_json(const nlohmann::json &j, Result &r) {
 }
 
 int main() {
-  // Configure the logger
 
-  configure_logger(std::nullopt);
+  // Logger::LoggerManager::getInstance().setup_logger(
+  //     "binomials", spdlog::level::info, spdlog::level::debug);
+  // Logger::LoggerManager::getInstance().setup_logger(
+  //     "isd_cost_estimate", spdlog::level::info, spdlog::level::debug);
 
   const std::string input_isd_values = "out/isd_values.json";
   std::ifstream file(input_isd_values);
@@ -89,9 +92,9 @@ int main() {
     Result current_q_res;
 
     for (bool is_kra : is_kra_values) {
-      spdlog::info("Processing n {}, k {}, t {}, qc_block_size {}, is_kra {}, "
-                   "is_red_factor_applied {}",
-                   n, k, t, qc_block_size, is_kra, is_red_factor_applied);
+      // spdlog::info("Processing n {}, k {}, t {}, qc_block_size {}, is_kra {}, "
+      //              "is_red_factor_applied {}",
+      //              n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       current_c_res =
           c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied,
                          std::unordered_set<Algorithm>{Stern});

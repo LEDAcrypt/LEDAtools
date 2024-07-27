@@ -1,10 +1,12 @@
 #include "isd_cost_estimate.hpp"
 #include "binomials.hpp"
-#include "logging.hpp"
+// #include "logging.hpp"
 #include <string>
 #include <cmath>
 #include <unordered_set>
 
+// static auto LOGGER =
+//     Logger::LoggerManager::getInstance().get_logger("isd_cost_estimate");
 /***************************Classic ISDs***************************************/
 
 Result isd_log_cost_classic_BJMM_approx(const uint32_t n, const uint32_t k,
@@ -94,6 +96,7 @@ Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
 Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
                                const uint32_t t) {
   NTL::RR n_real = NTL::RR(n);
+
   NTL::RR k_real = NTL::RR(k);
   NTL::RR t_real = NTL::RR(t);
   NTL::RR min_log_cost = n_real; // unreachable upper bound
@@ -118,8 +121,8 @@ Result isd_log_cost_classic_LB(const uint32_t n, const uint32_t k,
       best_p = p;
     }
   }
-  spdlog::info("Lee-Brickell best p: {}", best_p);
-  spdlog::info("Lee-Brickell time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("Lee-Brickell best p: {}", best_p);
+  // LOGGER->info("Lee-Brickell time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}};
@@ -163,8 +166,8 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
       }
     }
   }
-  spdlog::info("Leon Best l {} best p: {}", best_l, best_p);
-  spdlog::info("Leon time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("Leon Best l {} best p: {}", best_l, best_p);
+  // LOGGER->info("Leon time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Lee-Brickell";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -225,8 +228,8 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
     }
   }
 
-  spdlog::info("Stern Best l {}, best p: {}", best_l, best_p);
-  spdlog::info("Stern time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("Stern Best l {}, best p: {}", best_l, best_p);
+  // LOGGER->info("Stern time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Stern";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -289,8 +292,8 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
       }
     }
   }
-  spdlog::info("FS Best l {}, best p: {}", best_l, best_p);
-  spdlog::info("FS time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("FS Best l {}, best p: {}", best_l, best_p);
+  // LOGGER->info("FS time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Fin-Send";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -400,15 +403,15 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
 #endif
     }
   }
-  spdlog::info("MMT Best l {}, best p: {}", best_l, best_p);
+  // LOGGER->info("MMT Best l {}, best p: {}", best_l, best_p);
   if (best_p == constrained_max_p) {
-    spdlog::warn("Warning: p {p} on exploration edge!");
+    // LOGGER->warn("Warning: p {p} on exploration edge!");
   }
   if (best_l == constrained_max_l) {
-    spdlog::warn("Warning: l {l} on exploration edge!");
+    // LOGGER->warn("Warning: l {l} on exploration edge!");
   }
 
-  spdlog::info("MMT time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("MMT time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "MMT";
   res.params = {{"p", best_p}, {"l", best_l}};
@@ -546,13 +549,13 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
   } /* end for over p*/
 
   if (!best_l || !best_eps_1 || !best_p || !best_eps_2) {
-    spdlog::error("Error: One or more variables are not initialized.");
+    // LOGGER->error("Error: One or more variables are not initialized.");
     throw std::runtime_error("One or more variables are not initialized.");
   }
-  spdlog::info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
-               optional_to_string(best_l), optional_to_string(best_p),
-               optional_to_string(best_eps_1), optional_to_string(best_eps_2));
-  spdlog::info("BJMM time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_l),  Logger::LoggerManager::getInstance().optional_to_string(best_p),
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_eps_1),  Logger::LoggerManager::getInstance().optional_to_string(best_eps_2));
+  // LOGGER->info("BJMM time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "BJMM";
   res.params = {{"p", best_p.value()},
@@ -604,11 +607,11 @@ Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
     }
   }
   if (!best_p) {
-    spdlog::error("Error: One or more variables are not initialized.");
+    // LOGGER->error("Error: One or more variables are not initialized.");
     throw std::runtime_error("One or more variables are not initialized.");
   }
 
-  spdlog::info("Quantum LB time: {}", NTL::conv<double>(min_log_cost));
+  // LOGGER->info("Quantum LB time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "Quantum Lee-Brickell";
   res.params = {{"p", best_p.value()}};
