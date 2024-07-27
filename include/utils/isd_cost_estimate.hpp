@@ -39,7 +39,10 @@ const NTL::RR classic_rref_red_cost(const NTL::RR &n, const NTL::RR &r);
 
 Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor, std::unordered_set<Algorithm> algs);
+                      const bool compute_qc_reduction_factor,
+                      std::unordered_set<Algorithm> algs);
+
+double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra);
 
 Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
                                    const uint32_t t);

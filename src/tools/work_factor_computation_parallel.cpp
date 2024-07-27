@@ -94,7 +94,7 @@ int main() {
                    n, k, t, qc_block_size, is_kra, is_red_factor_applied);
       current_c_res =
           c_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied,
-                         std::unordered_set<Algorithm>{Prange, Lee_Brickell});
+                         std::unordered_set<Algorithm>{Stern});
       current_q_res =
           q_isd_log_cost(n, k, t, qc_block_size, is_kra, is_red_factor_applied,
                          std::unordered_set<QuantumAlgorithm>{Q_Lee_Brickell});
