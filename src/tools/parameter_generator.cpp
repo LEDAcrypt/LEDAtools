@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
   }
   p_th = proper_primes[current_prime_pos];
 
-  InitConstants();
+  
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
   pi = NTL::ComputePi_RR();

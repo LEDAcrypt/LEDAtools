@@ -50,7 +50,7 @@ int main() {
   file >> j;
 
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
-  InitConstants();
+  
   InitBinomials();
   pi = NTL::ComputePi_RR();
   bool is_kra_values[] = {true, false};

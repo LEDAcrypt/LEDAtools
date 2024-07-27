@@ -15,7 +15,10 @@
 extern NTL::RR pi;
 extern NTL::RR nat_log_2;
 
-void InitConstants();
+extern NTL::Mat<NTL::ZZ> binomial_table;
+extern NTL::Mat<NTL::ZZ> low_k_binomial_table;
+extern bool is_data_initialized;
+
 void InitBinomials();
 
 NTL::RR lnFactorial(NTL::RR n);
