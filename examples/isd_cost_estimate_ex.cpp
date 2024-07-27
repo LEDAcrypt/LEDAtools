@@ -78,38 +78,39 @@ int main() {
   uint32_t n = val.codeword_size;
   uint32_t k = val.code_dimension;
   uint32_t t = val.number_of_errors;
-  double qc_red_fac = get_qc_red_factor_log(val.qc_block_size, true);
+  double qc_red_fac = get_qc_red_factor_log(val.qc_block_size, n-k, QCAttackType::KRA3);
   double diff;
   std::string name;
   std::cout << "qc_red_fac " << qc_red_fac << std::endl;
   for (const auto &algo : std::unordered_set<Algorithm>{
-           Prange, Lee_Brickell, Leon, Stern, Finiasz_Sendrier}) {
+           Algorithm::Prange, Algorithm::Lee_Brickell, Algorithm::Leon,
+           Algorithm::Stern, Algorithm::Finiasz_Sendrier}) {
     switch (algo) {
-    case Prange:
+    case Algorithm::Prange:
       current_res = isd_log_cost_classic_Prange(n, k, t);
       name = "Prange";
       break;
-    case Lee_Brickell:
+    case Algorithm::Lee_Brickell:
       current_res = isd_log_cost_classic_LB(n, k, t);
       name = "Lee-Brickell";
       break;
-    case Leon:
+    case Algorithm::Leon:
       current_res = isd_log_cost_classic_Leon(n, k, t);
       name = "Leon";
       break;
-    case Stern:
+    case Algorithm::Stern:
       current_res = isd_log_cost_classic_Stern(n, k, t);
       name = "Stern";
       break;
-    case Finiasz_Sendrier:
+    case Algorithm::Finiasz_Sendrier:
       current_res = isd_log_cost_classic_FS(n, k, t);
       name = "Fin-Send";
       break;
-    case MMT:
+    case Algorithm::MMT:
       current_res = isd_log_cost_classic_MMT(n, k, t);
       name = "MMT ";
       break;
-    case BJMM:
+    case Algorithm::BJMM:
       current_res = isd_log_cost_classic_BJMM(n, k, t);
       name = "BJMM ";
       break;

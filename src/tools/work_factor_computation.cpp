@@ -54,14 +54,18 @@ int main(int argc, char *argv[]) {
             << "- <is_red_factor_applied>: " << is_red_factor_applied
             << std::endl;
 
+  for (int i = 0; i < static_cast<int>(QCAttackType::Count); ++i) {
+    QCAttackType attack = static_cast<QCAttackType>(i);
+    printColor(color);
+  }
   std::cout << "Minimum classic cost :"
-            << c_isd_log_cost(
-                   n, k, t, qc_block_size, is_kra, is_red_factor_applied,
-                   std::unordered_set<Algorithm>{
-                       Prange, Lee_Brickell, Leon, Stern,
-                       // Finiasz_Sendrier, //
-                       // MMT, BJMM //
-                   })
+            << c_isd_log_cost(n, k, t, qc_block_size, is_kra,
+                              is_red_factor_applied,
+                              std::unordered_set<Algorithm>{
+                                  Prange, Lee_Brickell, Leon, Stern,
+                                  // Finiasz_Sendrier, //
+                                  // MMT, BJMM //
+                              })
                    .value
             << " Minimum quantum cost :"
             << q_isd_log_cost(n, k, t, qc_block_size, is_kra,

@@ -1,8 +1,8 @@
 #include "isd_cost_estimate.hpp"
 #include "binomials.hpp"
 // #include "logging.hpp"
-#include <string>
 #include <cmath>
+#include <string>
 #include <unordered_set>
 
 // static auto LOGGER =
@@ -24,8 +24,7 @@ const NTL::RR log_probability_k_by_k_is_inv(const NTL::RR &k) {
     return NTL::RR(-1.79191682);
   NTL::RR log_pinv = NTL::RR(-1);
   for (long i = 2; i <= k; i++) {
-    log_pinv =
-      log_pinv + log2_RR(NTL::RR(1) - NTL::power2_RR(-i));
+    log_pinv = log_pinv + log2_RR(NTL::RR(1) - NTL::power2_RR(-i));
   }
   return log_pinv;
 }
@@ -49,7 +48,8 @@ const NTL::RR classic_rref_red_cost(const NTL::RR &n, const NTL::RR &r) {
 }
 
 // const NTL::RR classic_IS_candidate_cost(const NTL::RR &n, const NTL::RR &r) {
-// NB: r* r should be added only for SDP, and even there it can be omitted since the syndrome can be thought as another column of H
+// NB: r* r should be added only for SDP, and even there it can be omitted since
+// the syndrome can be thought as another column of H
 //   return classic_rref_red_cost(n, r) / probability_k_by_k_is_inv(r) + r * r;
 // }
 
@@ -82,7 +82,9 @@ Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
   NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
                      NTL::to_RR(binomial_wrapper(n - k, t));
 
-  NTL::RR log_cost = log2_RR(num_iter) - log_probability_k_by_k_is_inv(n_real - k_real) + log2_RR(cost_gje);
+  NTL::RR log_cost = log2_RR(num_iter) -
+                     log_probability_k_by_k_is_inv(n_real - k_real) +
+                     log2_RR(cost_gje);
 
   Result res;
   res.alg_name = "Prange";
@@ -152,7 +154,8 @@ Result isd_log_cost_classic_Leon(const uint32_t n, const uint32_t k,
     for (uint32_t l = 0; l < constrained_max_l; l++) {
       NTL::RR KChooseP = NTL::to_RR(binomial_wrapper(k, p));
       NTL::RR cost_iter =
-          gje_cost / probability_k_by_k_is_inv(n_real - k_real) + KChooseP * p_real * NTL::to_RR(l) +
+          gje_cost / probability_k_by_k_is_inv(n_real - k_real) +
+          KChooseP * p_real * NTL::to_RR(l) +
           (KChooseP / NTL::power2_RR(l)) * NTL::RR(p * (n - k - l));
       NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
                          NTL::to_RR(binomial_wrapper(k, p) *
@@ -189,9 +192,9 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
 
   NTL::RR gje_cost = classic_rref_red_cost(n_real, n_real - k_real);
   NTL::RR log_stern_list_size;
-      // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
+  // IS_candidate_cost = classic_IS_candidate_cost(n_real, n_real - k_real);
 
-      constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
+  constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
     constrained_max_l =
         (L_MAX_Stern > (n - k - (t - p)) ? (n - k - (t - p)) : L_MAX_Stern);
@@ -202,18 +205,18 @@ Result isd_log_cost_classic_Stern(const uint32_t n, const uint32_t k,
       NTL::RR kHalfChoosePHalf_real = NTL::to_RR(kHalfChoosePHalf);
 
       NTL::RR cost_iter =
-          gje_cost/ probability_k_by_k_is_inv(n_real - k_real) +
+          gje_cost / probability_k_by_k_is_inv(n_real - k_real) +
           kHalfChoosePHalf_real * (NTL::to_RR(l) * p_real +
                                    (kHalfChoosePHalf_real / NTL::power2_RR(l)) *
                                        NTL::RR(p * (n - k - l)));
       // #if LOG_COST_CRITERION == 1
-      log_stern_list_size = 
+      log_stern_list_size =
           kHalfChoosePHalf_real *
           (p_real / NTL::RR(2) * NTL::log(k_real / NTL::RR(2)) /
                NTL::log(NTL::RR(2)) +
            NTL::to_RR(l));
       log_stern_list_size = log2_RR(log_stern_list_size);
-          // NTL::log(log_stern_list_size) / NTL::log(NTL::RR(2));
+      // NTL::log(log_stern_list_size) / NTL::log(NTL::RR(2));
       cost_iter = cost_iter * log_stern_list_size;
       // #endif
       NTL::RR num_iter = NTL::to_RR(binomial_wrapper(n, t)) /
@@ -251,7 +254,8 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
   uint32_t best_l = 0, best_p = 2, constrained_max_l, constrained_max_p;
 
   NTL::RR cost_gje;
-//   return Fin_Send_rref_red_cost(n, r, l) / probability_k_by_k_is_inv(r - l) +
+  //   return Fin_Send_rref_red_cost(n, r, l) / probability_k_by_k_is_inv(r - l)
+  //   +
   constrained_max_p = P_MAX_Stern > t ? t : P_MAX_Stern;
   for (uint32_t p = 2; p < constrained_max_p; p = p + 2) {
     constrained_max_l =
@@ -260,12 +264,11 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
     NTL::ZZ kPlusLHalfChoosePHalf;
     for (uint32_t l = 0; l < constrained_max_l; l++) {
       NTL::RR l_real = NTL::RR(l);
-      cost_gje =
-          Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
+      cost_gje = Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
       kPlusLHalfChoosePHalf = binomial_wrapper((k + l) / 2, p / 2);
       NTL::RR kPlusLHalfChoosePHalf_real = NTL::to_RR(kPlusLHalfChoosePHalf);
       NTL::RR cost_iter =
-        cost_gje / probability_k_by_k_is_inv(n_real - k_real - l_real) +
+          cost_gje / probability_k_by_k_is_inv(n_real - k_real - l_real) +
           kPlusLHalfChoosePHalf_real *
               (NTL::to_RR(l) * p_real +
                (kPlusLHalfChoosePHalf_real / NTL::power2_RR(l)) *
@@ -299,7 +302,7 @@ Result isd_log_cost_classic_FS(const uint32_t n, const uint32_t k,
   res.params = {{"p", best_p}, {"l", best_l}};
   res.value = NTL::conv<double>(min_log_cost);
   res.gje_cost = NTL::conv<double>(log2_RR(cost_gje));
-  //cost_gje not reported
+  // cost_gje not reported
   return res;
 }
 
@@ -334,7 +337,8 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
           NTL::to_RR(binomial_wrapper(n, t)) /
           NTL::to_RR(kPlusLHalfChoosePHalf * kPlusLHalfChoosePHalf *
                      binomial_wrapper(n - k - l, t - p));
-      // FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real, r_real, l_real);
+      // FS_IS_candidate_cost = Fin_Send_IS_candidate_cost(n_real, r_real,
+      // l_real);
       cost_gje = Fin_Send_rref_red_cost(n_real, n_real - k_real, l_real);
       NTL::ZZ kPlusLHalfChoosePFourths = binomial_wrapper((k + l) / 2, p / 4);
       NTL::RR kPlusLHalfChoosePFourths_real =
@@ -367,7 +371,8 @@ Result isd_log_cost_classic_MMT(const uint32_t n, const uint32_t k,
 
         NTL::RR otherFactor = (NTL::to_RR(p / 4 * l_2) + interm);
         NTL::RR cost_iter =
-            cost_gje/probability_k_by_k_is_inv(n_real - k_real - l_real) + min * otherFactor +
+            cost_gje / probability_k_by_k_is_inv(n_real - k_real - l_real) +
+            min * otherFactor +
             kPlusLHalfChoosePFourths_real * NTL::to_RR(p / 2 * l_2);
 
         NTL::RR lastAddend =
@@ -553,8 +558,10 @@ Result isd_log_cost_classic_BJMM(const uint32_t n, const uint32_t k,
     throw std::runtime_error("One or more variables are not initialized.");
   }
   // LOGGER->info("BJMM Best l {}, best p: {}, best eps1: {}, best eps2: {}",
-  //               Logger::LoggerManager::getInstance().optional_to_string(best_l),  Logger::LoggerManager::getInstance().optional_to_string(best_p),
-  //               Logger::LoggerManager::getInstance().optional_to_string(best_eps_1),  Logger::LoggerManager::getInstance().optional_to_string(best_eps_2));
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_l),
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_p),
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_eps_1),
+  //               Logger::LoggerManager::getInstance().optional_to_string(best_eps_2));
   // LOGGER->info("BJMM time: {}", NTL::conv<double>(min_log_cost));
   Result res;
   res.alg_name = "BJMM";
@@ -699,49 +706,68 @@ Result isd_log_cost_quantum_Stern(const uint32_t n, const uint32_t k,
   return res;
 }
 
-
 /***************************Aggregation ***************************************/
 
-double
-get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
+double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t n0,
+                             QCAttackType attack) {
   /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
    * a message recovery (SDP), the DOOM advantage is sqrt(p).
+   *
+   * Additionally, for key recovery attacks, there is a speedup depending on the
+   * different kind of attacks (check LEDA specs).
    */
-  double qc_red_factor = is_kra ? logl(qc_order) : logl(qc_order) / 2.0;
-  return qc_red_factor / logl(2);
+
+  switch (attack) {
+  case QCAttackType::KRA1:
+    return log2(qc_order) + log2(NTL::conv<int>(binomial_wrapper(n0, 2)));
+  case QCAttackType::KRA2:
+    return log2(qc_order) + log2(n0);
+  case QCAttackType::KRA3:
+    return log2(qc_order);
+  case QCAttackType::MRA:
+    return log2(qc_order) / 2;
+  case QCAttackType::Plain:
+    return 0;
+  default:
+    throw std::runtime_error("Wrong attack type");
+  }
 }
 
 Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
-                      const uint32_t qc_order, const uint32_t is_kra,
-                      const bool compute_qc_reduction_factor, std::unordered_set<Algorithm> algs) {
+                      const uint32_t qc_order, QCAttackType attack,
+                      const bool compute_qc_reduction_factor,
+                      std::unordered_set<Algorithm> algs) {
+  // attack is useless if compute_qc_reduction_factor is false
+
   Result current_res, min_res;
-  double qc_red_factor =
-      compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
+  double qc_red_factor = compute_qc_reduction_factor
+                             ? get_qc_red_factor_log(qc_order, n - k, attack)
+                             : 0;
 
   double min_cost = n; // the cost cannot be greater than 2^n
 
   for (const auto &algo : algs) {
     switch (algo) {
-    case Prange:
-      current_res = isd_log_cost_classic_Prange(n,k,t);
+    case Algorithm::Prange:
+      current_res = isd_log_cost_classic_Prange(n, k, t);
       break;
-    case Lee_Brickell:
-      current_res = isd_log_cost_classic_LB(n,k,t);
+    case Algorithm::Lee_Brickell:
+      current_res = isd_log_cost_classic_LB(n, k, t);
       break;
-    case Leon:
-      current_res = isd_log_cost_classic_Leon(n,k,t);
+    case Algorithm::Leon:
+      current_res = isd_log_cost_classic_Leon(n, k, t);
       break;
-    case Stern:
-      current_res = isd_log_cost_classic_Stern(n,k,t);
+    case Algorithm::Stern:
+      current_res = isd_log_cost_classic_Stern(n, k, t);
       break;
-    case Finiasz_Sendrier:
+    case Algorithm::Finiasz_Sendrier:
       current_res = isd_log_cost_classic_FS(n, k, t);
       break;
-    case MMT:
+    case Algorithm::MMT:
       current_res = isd_log_cost_classic_MMT(n, k, t);
       break;
-    case BJMM:
-      current_res = isd_log_cost_classic_BJMM(n,k,t);
+    case Algorithm::BJMM:
+      current_res = isd_log_cost_classic_BJMM(n, k, t);
       break;
     default:
       std::cerr << "Unknown algorithm\n";
@@ -758,21 +784,22 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 }
 
 Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
-                      const uint32_t qc_order, const uint32_t is_kra,
+                      const uint32_t qc_order, QCAttackType attack,
                       const bool compute_qc_reduction_factor,
                       std::unordered_set<QuantumAlgorithm> algs) {
   Result current_res, min_res;
   double min_cost = n; // cannot be greater than n
-  double qc_red_factor =
-      compute_qc_reduction_factor ? get_qc_red_factor_log(qc_order, is_kra) : 0;
+  double qc_red_factor = compute_qc_reduction_factor
+                             ? get_qc_red_factor_log(qc_order, n - k, attack)
+                             : 0;
 
   for (const auto &algo : algs) {
     switch (algo) {
-    case Q_Lee_Brickell:
-      current_res = isd_log_cost_quantum_LB(n,k,t);
+    case QuantumAlgorithm::Q_Lee_Brickell:
+      current_res = isd_log_cost_quantum_LB(n, k, t);
       break;
-    case Q_Stern:
-      current_res = isd_log_cost_quantum_Stern(n,k,t);
+    case QuantumAlgorithm::Q_Stern:
+      current_res = isd_log_cost_quantum_Stern(n, k, t);
       break;
     default:
       std::cerr << "Unknown quantum algorithm\n";
