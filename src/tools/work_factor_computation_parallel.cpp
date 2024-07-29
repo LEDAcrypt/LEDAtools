@@ -101,14 +101,16 @@ int main() {
 
     // Post-apply reduction factors
     double red_fac =
-        get_qc_red_factor_log(qc_block_size, n - k, QCAttackType::MRA);
-    out_values["Classic"]["MRA"] = current_c_res.value - red_fac;
-    out_values["Quantum"]["MRA"] = current_c_res.value - red_fac;
-    red_fac = get_qc_red_factor_log(qc_block_size, n - k, QCAttackType::KRA1);
+        get_qc_red_factor_quantum_log(qc_block_size, n - k, QCAttackType::MRA);
+    out_values["Classic"]["MRA"] = current_q_res.value - red_fac;
+    red_fac =
+        get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::MRA);
+    out_values["Quantum"]["MRA"] = current_q_res.value - red_fac;
+    red_fac = get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA1);
     out_values["Classic"]["KRA1"] = current_c_res.value - red_fac;
-    red_fac = get_qc_red_factor_log(qc_block_size, n - k, QCAttackType::KRA2);
+    red_fac = get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA2);
     out_values["Classic"]["KRA2"] = current_c_res.value - red_fac;
-    red_fac = get_qc_red_factor_log(qc_block_size, n - k, QCAttackType::KRA2);
+    red_fac = get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA2);
     out_values["Classic"]["KRA3"] = current_c_res.value - red_fac;
 
     std::string filename =

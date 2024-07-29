@@ -45,7 +45,7 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const bool compute_qc_reduction_factor,
                       std::unordered_set<Algorithm> algs);
 
-double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t n0,
+double get_qc_red_factor_classic_log(const uint32_t qc_order, const uint32_t n0,
                              QCAttackType attack);
 
 Result isd_log_cost_classic_Prange(const uint32_t n, const uint32_t k,
@@ -70,6 +70,9 @@ Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, QCAttackType attack,
                       const bool compute_qc_reduction_factor,
                       std::unordered_set<QuantumAlgorithm> algs);
+
+double get_qc_red_factor_quantum_log(const uint32_t qc_order, const uint32_t n0,
+                             QCAttackType attack);
 
 Result isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
                                const uint32_t t);

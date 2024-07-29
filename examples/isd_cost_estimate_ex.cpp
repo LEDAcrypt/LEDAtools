@@ -78,7 +78,7 @@ int main() {
   uint32_t n = val.codeword_size;
   uint32_t k = val.code_dimension;
   uint32_t t = val.number_of_errors;
-  double qc_red_fac = get_qc_red_factor_log(val.qc_block_size, n-k, QCAttackType::KRA3);
+  double qc_red_fac = get_qc_red_factor_classic_log(val.qc_block_size, n-k, QCAttackType::KRA3);
   double diff;
   std::string name;
   std::cout << "qc_red_fac " << qc_red_fac << std::endl;

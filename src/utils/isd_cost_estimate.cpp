@@ -708,7 +708,7 @@ Result isd_log_cost_quantum_Stern(const uint32_t n, const uint32_t k,
 
 /***************************Aggregation ***************************************/
 
-double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t n0,
+double get_qc_red_factor_classic_log(const uint32_t qc_order, const uint32_t n0,
                              QCAttackType attack) {
   /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
    * a message recovery (SDP), the DOOM advantage is sqrt(p).
@@ -741,7 +741,7 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
 
   Result current_res, min_res;
   double qc_red_factor = compute_qc_reduction_factor
-                             ? get_qc_red_factor_log(qc_order, n - k, attack)
+                             ? get_qc_red_factor_classic_log(qc_order, n - k, attack)
                              : 0;
 
   double min_cost = n; // the cost cannot be greater than 2^n
@@ -783,6 +783,25 @@ Result c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
   return min_res;
 }
 
+double get_qc_red_factor_quantum_log(const uint32_t qc_order, const uint32_t n0,
+                             QCAttackType attack) {
+  /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
+   * a message recovery (SDP), the DOOM advantage is sqrt(p).
+   *
+   * Additionally, for key recovery attacks, there is a speedup depending on the
+   * different kind of attacks (check LEDA specs).
+   */
+
+  switch (attack) {
+  case QCAttackType::MRA:
+    return log2(qc_order) / 2;
+  case QCAttackType::Plain:
+    return 0;
+  default:
+    throw std::runtime_error("Wrong attack type");
+  }
+}
+
 Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
                       const uint32_t qc_order, QCAttackType attack,
                       const bool compute_qc_reduction_factor,
@@ -790,7 +809,7 @@ Result q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
   Result current_res, min_res;
   double min_cost = n; // cannot be greater than n
   double qc_red_factor = compute_qc_reduction_factor
-                             ? get_qc_red_factor_log(qc_order, n - k, attack)
+                             ? get_qc_red_factor_quantum_log(qc_order, n - k, attack)
                              : 0;
 
   for (const auto &algo : algs) {
