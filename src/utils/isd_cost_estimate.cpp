@@ -5,6 +5,77 @@
 #include <string>
 #include <unordered_set>
 
+#include <iostream>
+#include <sstream>
+
+// string'g
+
+std::string qc_attack_type_to_string(QCAttackType type) {
+  switch(type) {
+  case QCAttackType::KRA1:
+    return "KRA-1";
+  case QCAttackType::KRA2:
+    return "KRA-2";
+  case QCAttackType::KRA3:
+    return "KRA-3";
+  case QCAttackType::MRA:
+    return "MRA";
+  default:
+    return "Unknown attack type";
+  }
+}
+
+std::string quantum_algorithm_to_string(QuantumAlgorithm algo) {
+  switch (algo) {
+  case QuantumAlgorithm::Q_Lee_Brickell: return "Quantum Lee-Brickell";
+  case QuantumAlgorithm::Q_Stern: return "Quantum Stern";
+  default:
+    return "Unknown Algorithm";
+  }
+}
+
+std::string algorithm_to_string(Algorithm algo) {
+  switch (algo) {
+  case Algorithm::Prange:
+    return "Prange";
+  case Algorithm::Lee_Brickell:
+    return "Lee_Brickell";
+  case Algorithm::Leon:
+    return "Leon";
+  case Algorithm::Stern:
+    return "Stern";
+  case Algorithm::Finiasz_Sendrier:
+    return "Finiasz_Sendrier";
+  case Algorithm::MMT:
+    return "MMT";
+  case Algorithm::BJMM:
+    return "BJMM";
+    // Add more algorithms here as needed
+  default:
+    return "Unknown Algorithm";
+  }
+}
+
+std::string result_to_string(const Result &result) {
+  std::ostringstream oss;
+
+  // Add algorithm name
+  oss << "Algorithm: " << result.alg_name << "\n";
+
+  // Add parameters
+  oss << "Parameters:\n";
+  for (const auto &param : result.params) {
+    oss << "  " << param.first << ": " << param.second << "\n";
+  }
+
+  // Add other fields
+  oss << "Value: " << result.value << "\n";
+  oss << "GJE Cost: " << result.gje_cost << "\n";
+  oss << "List Size: " << result.list_size << "\n";
+
+  return oss.str();
+}
+
 // static auto LOGGER =
 //     Logger::LoggerManager::getInstance().get_logger("isd_cost_estimate");
 /***************************Classic ISDs***************************************/

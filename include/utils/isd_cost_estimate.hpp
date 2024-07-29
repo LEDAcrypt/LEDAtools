@@ -14,8 +14,12 @@ struct Result {
   double list_size;
 };
 
+std::string result_to_string(const Result &result);
+
 // Plain does not apply qc reductions
 enum class QCAttackType { KRA1, KRA2, KRA3, MRA, Plain, Count};
+
+std::string qc_attack_type_to_string(QCAttackType type);
 
 enum class Algorithm {
   Prange,
@@ -28,10 +32,18 @@ enum class Algorithm {
   // Add more algorithms here
   Count,
 };
+
+std::string algorithm_to_string(Algorithm algo);
+
+
 enum class QuantumAlgorithm {
   Q_Lee_Brickell,
   Q_Stern, // NOTE no circuit available
+  // Add more algorithms here
+  Count,
 };
+
+std::string quantum_algorithm_to_string(QuantumAlgorithm algo);
 
 /***************************Classic ISDs***************************************/
 

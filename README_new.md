@@ -25,11 +25,11 @@ cmake ..
 make -j
 ```
 
-** To create the binaries (inside the local path)
+** To create the binaries (inside the local `bin` directory)
 Inside `build`
 
 ```sh
-cmake -DCMAKE_INSTALL_PREFIX=/your/custom/path ..
+cmake -DCMAKE_INSTALL_PREFIX=.. ..
 make -j
 make install
 ```
