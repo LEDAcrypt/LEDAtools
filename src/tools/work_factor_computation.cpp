@@ -81,10 +81,11 @@ int handle_plain(const std::string args) {
   for (int i = 0; i < static_cast<int>(QuantumAlgorithm::Count); i++) {
     QuantumAlgorithm algo = static_cast<QuantumAlgorithm>(i);
 
-    std::cout << "Algorithm: " << quantum_algorithm_to_string(algo) << std::endl;
-    Result current_q_res = q_isd_log_cost(
-        n, k, t, qc_block_size, QCAttackType::Plain, false,
-        std::unordered_set<QuantumAlgorithm>{algo});
+    std::cout << "Algorithm: " << quantum_algorithm_to_string(algo)
+              << std::endl;
+    Result current_q_res =
+        q_isd_log_cost(n, k, t, qc_block_size, QCAttackType::Plain, false,
+                       std::unordered_set<QuantumAlgorithm>{algo});
     std::cout << "Plain " << std::endl;
     std::cout << result_to_string(current_q_res) << std::endl;
 
@@ -97,7 +98,6 @@ int handle_plain(const std::string args) {
 }
 
 int handle_json(std::string json_filename) {
-
   // const std::string input_isd_values = "out/isd_values.json";
   std::ifstream file(json_filename);
 
@@ -123,14 +123,15 @@ int handle_json(std::string json_filename) {
       return 1; // Return an error code
     }
   }
-// Iterate over the list of entries
+  // Iterate over the list of entries
 #pragma omp parallel for
   for (const auto &entry : j) {
     uint32_t n = entry["n"];
     uint32_t r = entry["r"];
     uint32_t k = n - r;
     uint32_t t = entry["t"];
-    uint32_t qc_block_size = entry["prime"];
+    // uint32_t qc_block_size = entry["prime"];
+    uint32_t qc_block_size = r;
     // int n0 = entry["n0"];
     // int v = entry["v"];
     // int lambd = entry["lambd"];
@@ -139,9 +140,9 @@ int handle_json(std::string json_filename) {
     Result current_c_res;
     Result current_q_res;
 
-    current_c_res =
-        c_isd_log_cost(n, k, t, qc_block_size, QCAttackType::Plain, false,
-                       std::unordered_set<Algorithm>{Algorithm::Stern});
+    current_c_res = c_isd_log_cost(
+        n, k, t, qc_block_size, QCAttackType::Plain, false,
+        std::unordered_set<Algorithm>{Algorithm::Prange, Algorithm::Stern});
 
     current_q_res = q_isd_log_cost(
         n, k, t, qc_block_size, QCAttackType::Plain, false,
@@ -201,14 +202,12 @@ int main(int argc, char *argv[]) {
   pi = NTL::ComputePi_RR();
 
   if (strcmp(argv[1], "--json") == 0) {
-
     std::string json_filename = argv[2];
     handle_json(json_filename);
   } else if (strcmp(argv[1], "--plain") == 0) {
     std::string plainArgs = argv[2];
     handle_plain(plainArgs);
   } else {
-
     std::cerr << "Unknown argument: " << argv[1] << std::endl;
     std::cerr << "Usage: " << argv[0]
               << " --json [filename]" // "| --csv [filename]"
