@@ -2,6 +2,7 @@
 #include <binomials.hpp>
 #include <cstdint>
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip> // For std::setprecision
 #include <iostream>
@@ -130,11 +131,18 @@ int handle_json(std::string json_filename) {
     uint32_t r = entry["r"];
     uint32_t k = n - r;
     uint32_t t = entry["t"];
+
+    std::string filename =
+        OUT_DIR_RESULTS + fmt::format("{:06}_{:06}_{:03}.json", n, k, t);
+    // Check if the generated file exists
+    if (std::filesystem::exists(filename)) {
+      // std::cout << "Generated file exists: " << filename << std::endl
+      //           << ". Skipping.";
+      continue;
+    }
     // uint32_t qc_block_size = entry["prime"];
     uint32_t qc_block_size = r;
-    // int n0 = entry["n0"];
-    // int v = entry["v"];
-    // int lambd = entry["lambd"];
+
     nlohmann::json out_values;
 
     Result current_c_res;
@@ -169,9 +177,6 @@ int handle_json(std::string json_filename) {
     red_fac =
         get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA3);
     out_values["Classic"]["KRA3"] = current_c_res.value - red_fac;
-
-    std::string filename =
-        OUT_DIR_RESULTS + fmt::format("{:06}_{:06}_{:03}.json", n, k, t);
 
     std::ofstream file(filename);
     if (file.is_open()) {
