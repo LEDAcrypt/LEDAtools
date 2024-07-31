@@ -124,8 +124,10 @@ int handle_json(std::string json_filename) {
       return 1; // Return an error code
     }
   }
-  // Iterate over the list of entries
-#pragma omp parallel for
+  // Iterate over the list of entries. With schedule(dynamic) loop iterations
+  // are divided into chunks, and threads dynamically grab chunks as they
+  // complete their previous work.
+#pragma omp parallel for schedule(dynamic)
   for (const auto &entry : j) {
     uint32_t n = entry["n"];
     uint32_t r = entry["r"];
