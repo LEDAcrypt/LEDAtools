@@ -1,4 +1,5 @@
 #include <NTL/ZZ.h>
+#include <atomic>
 #include <binomials.hpp>
 #include <cstdint>
 #include <ctime>
@@ -111,6 +112,9 @@ int handle_json(std::string json_filename) {
   // Parse the JSON content
   nlohmann::json j;
   file >> j;
+
+  int no_values = j.size();
+  std::cout << "Number of values in the JSON: " << no_values << std::endl;
   std::filesystem::path dirPath(OUT_DIR_RESULTS);
   // Check if the directory exists
   if (!std::filesystem::exists(dirPath)) {
@@ -124,11 +128,27 @@ int handle_json(std::string json_filename) {
       return 1; // Return an error code
     }
   }
+
+  // Define an atomic counter for processed entries
+  std::atomic<int> processed_count(0);
+  std::atomic<int> error_count(0);
+  std::atomic<int> skipped_count(0);
+
   // Iterate over the list of entries. With schedule(dynamic) loop iterations
   // are divided into chunks, and threads dynamically grab chunks as they
   // complete their previous work.
 #pragma omp parallel for schedule(dynamic)
   for (const auto &entry : j) {
+
+    if (processed_count % 1000 == 0) {
+#pragma omp critical
+      {
+        std::cout << "\rProcessed: " << processed_count << " / " << no_values
+                  << "; Skipped:" << skipped_count
+                  << "; Errors: " << error_count << std::flush;
+      }
+    }
+
     uint32_t n = entry["n"];
     uint32_t r = entry["r"];
     uint32_t k = n - r;
@@ -141,6 +161,7 @@ int handle_json(std::string json_filename) {
       // std::cout << "Generated file exists: " << filename << std::endl
       //           << ". Skipping.";
       continue;
+      ++skipped_count;
     }
     // uint32_t qc_block_size = entry["prime"];
     uint32_t qc_block_size = r;
@@ -185,13 +206,19 @@ int handle_json(std::string json_filename) {
       file << std::fixed << std::setprecision(10)
            << out_values.dump(4); // Format JSON with indentation
       file.close();
-      std::cout << "Data written to " << filename << std::endl;
+      ++processed_count;
+      // std::cout << "Data written to " << filename << std::endl;
     } else {
       std::cerr << "Could not open the file!" << std::endl;
+      ++error_count;
+    }
+    if (processed_count % 1000 == 0) {
+#pragma omp critical
+      { std::cout << processed_count << " / " << no_values << std::endl; }
     }
   }
   return 0;
-}
+  }
 
 int main(int argc, char *argv[]) {
   // Logger::LoggerManager::getInstance().setup_logger(
