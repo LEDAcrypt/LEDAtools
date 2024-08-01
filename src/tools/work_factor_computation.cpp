@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <ctime>
 #include <filesystem>
-#include <fstream>
 #include <iomanip> // For std::setprecision
 #include <iostream>
 #include <isd_cost_estimate.hpp>
@@ -16,6 +15,9 @@
 #include <unordered_set>
 
 #include "globals.hpp"
+#include <vector>
+#include <sstream>
+#include <cstring>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
@@ -133,19 +135,26 @@ int handle_json(std::string json_filename) {
   std::atomic<int> processed_count(0);
   std::atomic<int> error_count(0);
   std::atomic<int> skipped_count(0);
+  std::atomic<int> iteration(0);
 
   // Iterate over the list of entries. With schedule(dynamic) loop iterations
   // are divided into chunks, and threads dynamically grab chunks as they
   // complete their previous work.
 #pragma omp parallel for schedule(dynamic)
   for (const auto &entry : j) {
-
-    if (processed_count % 1000 == 0) {
+    ++iteration;
+    if (iteration % 1234 == 0) {
 #pragma omp critical
       {
-        std::cout << "\rProcessed: " << processed_count << " / " << no_values
-                  << "; Skipped:" << skipped_count
-                  << "; Errors: " << error_count << std::flush;
+        std::cout
+        << "\rProcessed: " << std::setw(8) << std::setfill(' ')
+                  << processed_count << "; Skipped: " << std::setw(8)
+                  << std::setfill(' ') << skipped_count
+                  << "; Errors: " << std::setw(8) << std::setfill(' ')
+                  << error_count << "; Remaining: " << std::setw(8)
+                  << std::setfill(' ')
+                  << (no_values - skipped_count - processed_count - error_count)
+                  << " / " << no_values << std::flush;
       }
     }
 
@@ -160,8 +169,8 @@ int handle_json(std::string json_filename) {
     if (std::filesystem::exists(filename)) {
       // std::cout << "Generated file exists: " << filename << std::endl
       //           << ". Skipping.";
-      continue;
       ++skipped_count;
+      continue;
     }
     // uint32_t qc_block_size = entry["prime"];
     uint32_t qc_block_size = r;
@@ -212,13 +221,18 @@ int handle_json(std::string json_filename) {
       std::cerr << "Could not open the file!" << std::endl;
       ++error_count;
     }
-    if (processed_count % 1000 == 0) {
-#pragma omp critical
-      { std::cout << processed_count << " / " << no_values << std::endl; }
-    }
+
+    std::cout << "\rProcessed: " << std::setw(8) << std::setfill(' ')
+              << processed_count << "; Skipped: " << std::setw(8)
+              << std::setfill(' ') << skipped_count
+              << "; Errors: " << std::setw(8) << std::setfill(' ')
+              << error_count << "; Remaining: " << std::setw(8)
+              << std::setfill(' ')
+              << (no_values - skipped_count - processed_count - error_count)
+              << " / " << no_values << std::endl;
   }
   return 0;
-  }
+}
 
 int main(int argc, char *argv[]) {
   // Logger::LoggerManager::getInstance().setup_logger(
@@ -248,6 +262,5 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
-
   return 0;
 }
