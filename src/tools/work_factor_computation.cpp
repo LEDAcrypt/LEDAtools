@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <iomanip> // For std::setprecision
 #include <iostream>
 #include <isd_cost_estimate.hpp>
@@ -15,9 +16,9 @@
 #include <unordered_set>
 
 #include "globals.hpp"
-#include <vector>
-#include <sstream>
 #include <cstring>
+#include <sstream>
+#include <vector>
 
 #define NUM_BITS_REAL_MANTISSA 1024
 #define IGNORE_DECODING_COST 0
@@ -146,8 +147,7 @@ int handle_json(std::string json_filename) {
     if (iteration % 1234 == 0) {
 #pragma omp critical
       {
-        std::cout
-        << "\rProcessed: " << std::setw(8) << std::setfill(' ')
+        std::cout << "\rProcessed: " << std::setw(8) << std::setfill(' ')
                   << processed_count << "; Skipped: " << std::setw(8)
                   << std::setfill(' ') << skipped_count
                   << "; Errors: " << std::setw(8) << std::setfill(' ')
@@ -172,6 +172,8 @@ int handle_json(std::string json_filename) {
       ++skipped_count;
       continue;
     }
+#pragma omp critical
+    std::cout << "Processing " << filename << std::endl;
     // uint32_t qc_block_size = entry["prime"];
     uint32_t qc_block_size = r;
 
@@ -193,22 +195,27 @@ int handle_json(std::string json_filename) {
     out_values["Quantum"]["Plain"] = current_q_res;
 
     // Post-apply reduction factors
-    double red_fac =
-        get_qc_red_factor_quantum_log(qc_block_size, n - k, QCAttackType::MRA);
-    out_values["Quantum"]["MRA"] = current_q_res.value - red_fac;
+    // uint32_t n0 = n / r;
+    // if (n0 == 0) {
+    //   // It's a value with rate < .5; it happens for KRA2 attacks
+    //   double red_fac =
+    //       get_qc_red_factor_quantum_log(qc_block_size, n0, QCAttackType::MRA);
+    //   out_values["Quantum"]["MRA"] = current_q_res.value - red_fac;
 
-    red_fac =
-        get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::MRA);
-    out_values["Classic"]["MRA"] = current_c_res.value - red_fac;
-    red_fac =
-        get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA1);
-    out_values["Classic"]["KRA1"] = current_c_res.value - red_fac;
-    red_fac =
-        get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA2);
-    out_values["Classic"]["KRA2"] = current_c_res.value - red_fac;
-    red_fac =
-        get_qc_red_factor_classic_log(qc_block_size, n - k, QCAttackType::KRA3);
-    out_values["Classic"]["KRA3"] = current_c_res.value - red_fac;
+    //   red_fac =
+    //       get_qc_red_factor_classic_log(qc_block_size, n0, QCAttackType::MRA);
+    //   out_values["Classic"]["MRA"] = current_c_res.value - red_fac;
+
+    //   red_fac =
+    //       get_qc_red_factor_classic_log(qc_block_size, n0, QCAttackType::KRA1);
+    //   out_values["Classic"]["KRA1"] = current_c_res.value - red_fac;
+    //   red_fac =
+    //       get_qc_red_factor_classic_log(qc_block_size, n0, QCAttackType::KRA2);
+    //   out_values["Classic"]["KRA2"] = current_c_res.value - red_fac;
+    //   red_fac =
+    //       get_qc_red_factor_classic_log(qc_block_size, n0, QCAttackType::KRA3);
+    //   out_values["Classic"]["KRA3"] = current_c_res.value - red_fac;
+    // }
 
     std::ofstream file(filename);
     if (file.is_open()) {
@@ -221,16 +228,16 @@ int handle_json(std::string json_filename) {
       std::cerr << "Could not open the file!" << std::endl;
       ++error_count;
     }
-
-    std::cout << "\rProcessed: " << std::setw(8) << std::setfill(' ')
-              << processed_count << "; Skipped: " << std::setw(8)
-              << std::setfill(' ') << skipped_count
-              << "; Errors: " << std::setw(8) << std::setfill(' ')
-              << error_count << "; Remaining: " << std::setw(8)
-              << std::setfill(' ')
-              << (no_values - skipped_count - processed_count - error_count)
-              << " / " << no_values << std::endl;
   }
+
+  std::cout << "\rProcessed: " << std::setw(8) << std::setfill(' ')
+            << processed_count << "; Skipped: " << std::setw(8)
+            << std::setfill(' ') << skipped_count
+            << "; Errors: " << std::setw(8) << std::setfill(' ') << error_count
+            << "; Remaining: " << std::setw(8) << std::setfill(' ')
+            << (no_values - skipped_count - processed_count - error_count)
+            << " / " << no_values << std::endl;
+
   return 0;
 }
 
