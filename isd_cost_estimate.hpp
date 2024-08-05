@@ -3,6 +3,8 @@
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
 #include <iomanip>
+#include <iostream>
+#include <cmath>
 
 /***************************Classic ISDs***************************************/
 
@@ -495,30 +497,32 @@ double isd_log_cost_classic_BJMM(const uint32_t n,
 
 const NTL::RR quantum_gauss_red_cost(const NTL::RR &n, 
                                      const NTL::RR & k) {
-    return 0.5* NTL::power(n-k,3) + k*NTL::power((n-k),2);
+  // return 0.5* NTL::power(n-k,3) + k*NTL::power((n-k),2);
+  return 1.5 * NTL::power(n - k, 2) - 0.5 * (n-k);
 }
 
+double isd_log_cost_quantum_LB(const uint32_t n, const uint32_t k,
+                               const uint32_t t, const uint32_t p) {
+  NTL::RR n_real = NTL::RR(n);
+  NTL::RR k_real = NTL::RR(k);
+  NTL::RR t_real = NTL::RR(t);
+  NTL::RR p_real = NTL::RR(p);
+  NTL::RR log_pi_fourths = NTL::log(pi * 0.25);
+  NTL::RR log_pinv = log_probability_k_by_k_is_inv(k_real);
 
-double isd_log_cost_quantum_LB(const uint32_t n, 
-                               const uint32_t k,
-                               const uint32_t t) {
-    NTL::RR n_real = NTL::RR(n);
-    NTL::RR k_real = NTL::RR(k);
-    NTL::RR t_real = NTL::RR(t);
-    NTL::RR log_pi_fourths = NTL::log(pi*0.25);
-    NTL::RR log_pinv = log_probability_k_by_k_is_inv(k_real);
-    NTL::RR iteration_cost = quantum_gauss_red_cost(n_real,k_real) +
-                             NTL::to_RR(binomial_wrapper(k,2) * 2 * (n-k));
-    NTL::RR log_cost = (lnBinom(n_real,t_real) - 
-                        (lnBinom(k_real,NTL::RR(2)) + 
-                         lnBinom(n_real-k_real,t-NTL::RR(2))) 
-                       )*0.5 + 
-                       log_pi_fourths; 
-    log_cost += NTL::log(iteration_cost);
-    log_cost = log_cost / NTL::log(NTL::RR(2));
-    return NTL::conv<double>( log_cost );
+  /* Check https://doi.org/10.1007/978-3-031-61489-7_2
+   * for the full measures of the lee-brickell quantum attack
+   */
+  NTL::RR iteration_cost = quantum_gauss_red_cost(n_real, k_real) +
+                           NTL::to_RR(binomial_wrapper(k, p)) *
+                               NTL::log(n_real - k_real) / NTL::log(NTL::RR(2));
+  NTL::RR log_cost = log_pi_fourths + .5*
+    (lnBinom(n_real, t_real) - log_pinv - (lnBinom(k_real, p_real) +
+                                           lnBinom(n_real - k_real, t_real - p_real)));
+  log_cost += NTL::log(iteration_cost);
+  log_cost = log_cost / NTL::log(NTL::RR(2));
+  return NTL::conv<double>(log_cost);
 }
-
 
 #define MAX_M (t/2)
 
@@ -599,82 +603,93 @@ double isd_log_cost_quantum_stern(const uint32_t n,
 
 /***************************Aggregation ***************************************/
 
+double get_qc_red_factor_log(const uint32_t qc_order, const uint32_t is_kra) {
+  /* For key recovery attacks (CFP) the advantage from quasi-cyclicity is p. For
+   * a message recovery (SDP), the DOOM advantage is sqrt(p).
+   */
+  double qc_red_factor = is_kra ? logl(qc_order) : logl(qc_order) / 2.0;
+  return qc_red_factor / logl(2);
+}
 
-double c_isd_log_cost(const uint32_t n, 
-                      const uint32_t k,
-                      const uint32_t t,
-                      const uint32_t qc_order, 
-                      const uint32_t is_kra) {
-    double min_cost = n, current_cost;
-    /* for key recovery attacks the advantage from quasi-cyclicity is p, 
-     * for an ISD, the DOOM advantage is just sqrt(p) */
-    double qc_red_factor= is_kra ? logl(qc_order) : logl(qc_order)/2.0;
-    qc_red_factor = qc_red_factor/logl(2);
 
-    std::cout << "Classic ";
-    current_cost = isd_log_cost_classic_Prange(n,k,t) - qc_red_factor;
-    std::cerr << "Classic Prange: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = current_cost;
+double c_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
+                      const uint32_t qc_order, const uint32_t is_kra,
+                      const bool compute_qc_reduction_factor) {
+  double min_cost = n, current_cost;
+  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
 
-    current_cost = isd_log_cost_classic_LB(n,k,t)- qc_red_factor;
-    std::cerr << "Classic Lee-Brickell ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  std::cout << "Classic ";
+  current_cost = isd_log_cost_classic_Prange(n, k, t) - qc_red_factor;
+  std::cerr << "Classic Prange: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = current_cost;
 
-    current_cost = isd_log_cost_classic_Leon(n,k,t)- qc_red_factor;
-     std::cerr << "Classic Leon ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_LB(n, k, t) - qc_red_factor;
+  std::cerr << "Classic Lee-Brickell ISD: " << std::setprecision(5)
+            << current_cost << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
 
-    current_cost = isd_log_cost_classic_Stern(n,k,t)- qc_red_factor;
-    std::cerr << "Classic Stern ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_Leon(n, k, t) - qc_red_factor;
+  std::cerr << "Classic Leon ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
 
-    current_cost = isd_log_cost_classic_FS(n,k,t)- qc_red_factor;
-    std::cerr << "Classic Fin-Send ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_Stern(n, k, t) - qc_red_factor;
+  std::cerr << "Classic Stern ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
 
-    current_cost = isd_log_cost_classic_MMT(n,k,t)- qc_red_factor;
-    std::cerr << "Classic MMT ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_FS(n, k, t) - qc_red_factor;
+  std::cerr << "Classic Fin-Send ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
+
+#if SKIP_MMT == 0
+  current_cost = isd_log_cost_classic_MMT(n, k, t) - qc_red_factor;
+  std::cerr << "Classic MMT ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
+#endif
 
 #if SKIP_BJMM == 0
-    current_cost = isd_log_cost_classic_BJMM(n,k,t)- qc_red_factor;
-    std::cerr << "Classic BJMM ISD: " << std::setprecision(5) << current_cost << std::endl;
-    std::cout << current_cost << " ";
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
+  current_cost = isd_log_cost_classic_BJMM(n, k, t) - qc_red_factor;
+  std::cerr << "Classic BJMM ISD: " << std::setprecision(5) << current_cost
+            << std::endl;
+  std::cout << current_cost << " ";
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
 #endif
     std::cout << std::endl;
 
     return min_cost;
 }
 
-double q_isd_log_cost(const uint32_t n, 
-                      const uint32_t k, 
-                      const uint32_t t,
-                      const uint32_t qc_order, 
-                      const uint32_t is_kra) {
-    double min_cost = n, current_cost;
-    /* for key recovery attacks the advantage from quasi-cyclicity is p, 
-     * for an ISD, the DOOM advantage is just sqrt(p) */
-    double qc_red_factor= is_kra ? logl(qc_order) : logl(qc_order)/2.0;
-    qc_red_factor = qc_red_factor/logl(2);
-    std::cout << "Quantum ";
+double q_isd_log_cost(const uint32_t n, const uint32_t k, const uint32_t t,
+                      const uint32_t qc_order, const uint32_t is_kra, const bool compute_qc_reduction_factor) {
+  double min_cost = n, current_cost;
+  /* for key recovery attacks the advantage from quasi-cyclicity is p,
+   * for an ISD, the DOOM advantage is just sqrt(p) */
+  std::cout << "Quantum ";
+  double qc_red_factor = compute_qc_reduction_factor? get_qc_red_factor_log(qc_order, is_kra): 0;
 
-    current_cost = isd_log_cost_quantum_LB(n,k,t)- qc_red_factor;
-    std::cout << current_cost << " ";
-//     std::cout << " Q-Lee-Brickell ISD: " << /**/current_cost << std::endl;
-    min_cost = current_cost;
+  /* This is just a quick hack since experiments says that p = 1 is
+   * the optimal value at least for the NIST code-based finalists
+   */
+  current_cost = isd_log_cost_quantum_LB(n, k, t, 1) - qc_red_factor;
+  std::cout << current_cost << " ";
+  //     std::cout << " Q-Lee-Brickell ISD: " << /**/current_cost << std::endl;
+  min_cost = current_cost;
 
-    current_cost = isd_log_cost_quantum_stern(n, k, t)- qc_red_factor;
-    std::cout << current_cost << " ";
-//     std::cout << ", Q-Stern ISD: " << current_cost << std::endl;
-    min_cost = min_cost > current_cost ? current_cost : min_cost;
-    std::cout << std::endl;
+  current_cost = isd_log_cost_quantum_stern(n, k, t) - qc_red_factor;
+  std::cout << current_cost << " ";
+  //     std::cout << ", Q-Stern ISD: " << current_cost << std::endl;
+  min_cost = min_cost > current_cost ? current_cost : min_cost;
+  std::cout << std::endl;
 
-    return min_cost;
+  return min_cost;
 }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cstdint>
 
 #define PRIMES_NO 5483
 uint32_t proper_primes[5483] = {

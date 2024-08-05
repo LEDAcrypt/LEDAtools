@@ -1,3 +1,19 @@
+# Warning! Ignore all files w/out extensions
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/
+# Unignore other
+!LICENSE
+!Makefile
+
+# Cache
+.ccls-cache
+# out
+out/
+
 # Prerequisites
 *.d
 
