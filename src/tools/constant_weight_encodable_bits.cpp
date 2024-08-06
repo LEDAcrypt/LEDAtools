@@ -3,7 +3,7 @@
 #include <cmath>
 #include <NTL/ZZ.h>
 
-#include "binomials.hpp"
+#include "utils/binomials.hpp"
 
 int main(int argc, char* argv[]){
  if(argc != 3){
@@ -12,9 +12,9 @@ int main(int argc, char* argv[]){
     return -1;
  }
 
+ 
  InitBinomials();
  NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
- pi = NTL::ComputePi_RR();
  uint32_t n = atoi(argv[1]);
  uint32_t t = atoi(argv[2]);
  /* reduce by a factor matching the QC block size */

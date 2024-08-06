@@ -1,14 +1,26 @@
-# Warning! Ignore all files w/out extensions
-# Ignore all
-*
-# Unignore all with extensions
-!*.*
-# Unignore all dirs
-!*/
-# Unignore other
-!LICENSE
-!Makefile
+# MINE
+bin/
+build/
 
+# Log output
+logs/
+
+# CMAKE
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
+
+
+# C++
 # Cache
 .ccls-cache
 # out

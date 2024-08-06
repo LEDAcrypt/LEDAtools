@@ -15,9 +15,9 @@ int main(int argc, char* argv[]){
     return -1;
   }
 
+  
   InitBinomials();
   NTL::RR::SetPrecision(NUM_BITS_REAL_MANTISSA);
-  pi = NTL::ComputePi_RR();
   uint32_t p = atoi(argv[1]);
   uint32_t d_v = atoi(argv[2]);
   uint32_t n_0 = atoi(argv[3]);

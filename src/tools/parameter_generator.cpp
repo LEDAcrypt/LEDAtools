@@ -1,21 +1,26 @@
 #include <NTL/ZZ.h>
 #include <cmath>
 #include <cstdint>
-
-#define NUM_BITS_REAL_MANTISSA 128
-#define IGNORE_DECODING_COST 0
-#define SKIP_BJMM 1
-#define SKIP_MMT 1
-#define LOG_COST_CRITERION 1
+#include <vector>
 
 #include "binomials.hpp"
 #include "bit_error_probabilities.hpp"
 #include "isd_cost_estimate.hpp"
+// #include "logging.hpp"
 #include "partitions_permanents.hpp"
 #include "proper_primes.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <string>
+
+#define NUM_BITS_REAL_MANTISSA 128
+#define IGNORE_DECODING_COST 0
+// #define SKIP_BJMM 1
+// #define SKIP_MMT 1
+// #define LOG_COST_CRITERION 1
+// static auto LOGGER =
+//     Logger::LoggerManager::getInstance().get_logger("isd_cost_estimate");
 
 uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
                         const uint32_t n_0, const uint32_t p) {
@@ -31,9 +36,18 @@ uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
     t = (lo + hi) / 2;
     std::cerr << "testing t " << t << std::endl;
     achieved_c_sec_level =
-        c_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true);
+      c_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, QCAttackType::MRA, true,
+                       std::unordered_set<Algorithm>{
+                           Algorithm::Prange, Algorithm::Lee_Brickell,
+                           Algorithm::Leon, Algorithm::Stern,
+                           Algorithm::Finiasz_Sendrier, Algorithm::MMT,
+                           Algorithm::BJMM})
+            .value;
     achieved_q_sec_level =
-        q_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, 0, true);
+      q_isd_log_cost(n_0 * p, ((n_0 - 1) * p), t, p, QCAttackType::MRA, true,
+                       std::unordered_set<QuantumAlgorithm>{
+                         QuantumAlgorithm::Q_Lee_Brickell, QuantumAlgorithm::Q_Stern})
+            .value;
     if ((achieved_c_sec_level >= c_sec_level) &&
         (achieved_q_sec_level >= q_sec_level)) {
       hi = t;
@@ -49,7 +63,7 @@ uint32_t estimate_t_val(const uint32_t c_sec_level, const uint32_t q_sec_level,
 }
 
 int ComputeDvMPartition(const uint64_t d_v_prime, const uint64_t n_0,
-                        uint64_t mpartition[], uint64_t &d_v) {
+                        std::vector<uint64_t> &mpartition, uint64_t &d_v) {
   d_v = floor(sqrt(d_v_prime));
   d_v = (d_v & 0x01) ? d_v : d_v + 1;
   uint64_t m = ceil((double)d_v_prime / (double)d_v);
@@ -67,7 +81,7 @@ int ComputeDvMPartition(const uint64_t d_v_prime, const uint64_t n_0,
 
 uint64_t estimate_dv(const uint32_t c_sec_level, // expressed as
                      const uint32_t q_sec_level, const uint32_t n_0,
-                     const uint32_t p, uint64_t mpartition[]) {
+                     const uint32_t p, std::vector<uint64_t> &mpartition) {
   double achieved_c_sec_level = 0.0;
   double achieved_q_sec_level = 0.0;
   double achieved_c_enum_sec_level = 0.0;
@@ -104,9 +118,19 @@ uint64_t estimate_dv(const uint32_t c_sec_level, // expressed as
         /* last parameter indicates a KRA, reduce margin by p due to
         quasi cyclicity */
         achieved_c_sec_level =
-            c_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true);
+            c_isd_log_cost(
+                n_0 * p, p, n_0 * d_v_prime, p, QCAttackType::KRA3, true,
+                std::unordered_set<Algorithm>{
+                    Algorithm::Prange, Algorithm::Lee_Brickell, Algorithm::Leon,
+                    Algorithm::Stern, Algorithm::Finiasz_Sendrier,
+                    Algorithm::MMT, Algorithm::BJMM})
+                .value;
         achieved_q_sec_level =
-            q_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, 1, true);
+          q_isd_log_cost(n_0 * p, p, n_0 * d_v_prime, p, QCAttackType::KRA3, true,
+                           std::unordered_set<QuantumAlgorithm>{
+                               QuantumAlgorithm::Q_Lee_Brickell,
+                               QuantumAlgorithm::Q_Stern})
+                .value;
       }
     }
 
@@ -150,7 +174,7 @@ int main(int argc, char *argv[]) {
             << " epsilon " << epsilon << std::endl;
 
   uint64_t p, p_th, t, d_v_prime, d_v;
-  uint64_t mpartition[n_0] = {0};
+  std::vector<uint64_t> mpartition(n_0, 0);
 
   int current_prime_pos = 0;
   while (proper_primes[current_prime_pos] < starting_prime_lower_bound) {
@@ -201,7 +225,8 @@ int main(int argc, char *argv[]) {
 
   std::cout << "refining parameters" << std::endl;
 
-  uint64_t p_ok, t_ok, d_v_ok, mpartition_ok[n_0] = {0};
+  std::optional<uint32_t> p_ok, t_ok, d_v_ok;
+  std::vector<uint64_t> mpartition_ok(n_0, 0);
   /* refinement step taking into account possible invalid m partitions */
 
   do {
@@ -240,11 +265,23 @@ int main(int argc, char *argv[]) {
     current_prime_pos--;
   } while ((p > (1.0 + epsilon) * p_th) && (current_prime_pos > 0));
 
-  std::cout << "parameter set found: p:" << p_ok << " t: " << t_ok;
-  std::cout << " d_v : " << d_v_ok << " mpartition: [ ";
-  for (unsigned i = 0; i < n_0; i++) {
-    std::cout << mpartition_ok[i] << " ";
+  if (!p_ok || !d_v_ok || !t_ok) {
+    // spdlog::error("Error: One or more variables are not initialized.");
+    throw std::runtime_error("One or more variables are not initialized.");
+  } else {
+    // spdlog::info(
+    //     "parameter set found: p={}, t={}, d_v={}, mpartition={}",
+    //     Logger::LoggerManager::getInstance().optional_to_string(p_ok),
+    //     Logger::LoggerManager::getInstance().optional_to_string(t_ok),
+    //     Logger::LoggerManager::getInstance().optional_to_string(d_v_ok),
+    //     Logger::LoggerManager::getInstance().array_to_string(mpartition_ok));
   }
-  std::cout << " ]" << std::endl;
+  //         std::cout
+  //     << " p:" << p_ok << " t: " << t_ok;
+  // std::cout << " d_v : " << d_v_ok << " mpartition: [ ";
+  // for (unsigned i = 0; i < n_0; i++) {
+  //   std::cout << mpartition_ok[i] << " ";
+  // }
+  // std::cout << " ]" << std::endl;
   return 0;
 }
