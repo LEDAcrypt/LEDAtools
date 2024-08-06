@@ -6,7 +6,7 @@
 #include "binomials.hpp"
 #include "bit_error_probabilities.hpp"
 #include "isd_cost_estimate.hpp"
-#include "logging.hpp"
+// #include "logging.hpp"
 #include "partitions_permanents.hpp"
 #include "proper_primes.hpp"
 #include <cmath>
@@ -266,15 +266,15 @@ int main(int argc, char *argv[]) {
   } while ((p > (1.0 + epsilon) * p_th) && (current_prime_pos > 0));
 
   if (!p_ok || !d_v_ok || !t_ok) {
-    spdlog::error("Error: One or more variables are not initialized.");
+    // spdlog::error("Error: One or more variables are not initialized.");
     throw std::runtime_error("One or more variables are not initialized.");
   } else {
-    spdlog::info(
-        "parameter set found: p={}, t={}, d_v={}, mpartition={}",
-        Logger::LoggerManager::getInstance().optional_to_string(p_ok),
-        Logger::LoggerManager::getInstance().optional_to_string(t_ok),
-        Logger::LoggerManager::getInstance().optional_to_string(d_v_ok),
-        Logger::LoggerManager::getInstance().array_to_string(mpartition_ok));
+    // spdlog::info(
+    //     "parameter set found: p={}, t={}, d_v={}, mpartition={}",
+    //     Logger::LoggerManager::getInstance().optional_to_string(p_ok),
+    //     Logger::LoggerManager::getInstance().optional_to_string(t_ok),
+    //     Logger::LoggerManager::getInstance().optional_to_string(d_v_ok),
+    //     Logger::LoggerManager::getInstance().array_to_string(mpartition_ok));
   }
   //         std::cout
   //     << " p:" << p_ok << " t: " << t_ok;
